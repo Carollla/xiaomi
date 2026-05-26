@@ -22,9 +22,10 @@ final_lane target_y=15.60 pose=(3.62,15.65) ...
 - `right_all/motion.py`：CyberDog 运动指令封装，负责把状态机命令转换成底层 LCM 控制命令。
 - `right_all/main_2026.py`：2026 状态机入口。
 - `right_all/detect/gazebo_pose_provider.py`：Gazebo 位姿读取，用于真实位置判断。
-- `run_2026_world_headless.sh`：启动 2026 headless 仿真世界。
-- `run_2026_world_gui.sh`：启动带 GUI 的 2026 仿真世界。
+- `run_2026_world_gui.sh`：启动带 GUI 的 2026 仿真世界，演示和验收时使用这个脚本。
+- `run_2026_world_headless.sh`：启动 2026 headless 仿真世界，只适合无人值守调试，不适合展示。
 - `run_2026_race.sh`：启动 2026 比赛代码。
+- `run_2026_full_gui.sh`：前台 GUI 演示提示脚本，只打印三个终端的运行命令，不会后台启动。
 - `docker_run_2026.ps1`：Windows PowerShell 下的 Docker 运行辅助脚本。
 
 ## 环境要求
@@ -34,6 +35,7 @@ final_lane target_y=15.60 pose=(3.62,15.65) ...
 - Windows 10/11
 - Docker Desktop 已启动
 - WSL Ubuntu 20.04 可用
+- 能显示 Linux GUI 窗口。Windows 11 推荐使用 WSLg；Windows 10 可使用 VcXsrv/Xming 等 X Server。
 - 已有 2026 CyberDog 仿真镜像或镜像包
 - 本项目代码放在 Windows 路径或 WSL 路径均可
 
@@ -94,7 +96,18 @@ docker tag 原镜像名:原标签 cyberdog_sim:v2026
 
 如果没有容器，使用下面命令创建。把 `F:\一些日常\xiaomi-su7` 换成你的实际仓库路径。
 
-PowerShell：
+### Windows 11 / WSLg 推荐方式
+
+如果 Docker 在 WSL 里运行，并且你的 WSL 支持 WSLg，推荐用仓库里的脚本创建容器：
+
+```powershell
+cd F:\一些日常\xiaomi-su7
+.\docker_run_2026.ps1
+```
+
+这个脚本会挂载 WSLg 相关目录，Gazebo GUI 窗口可以直接显示出来。
+
+### 手动创建容器
 
 ```powershell
 docker run -it --name cyberdog2026 `
@@ -102,6 +115,22 @@ docker run -it --name cyberdog2026 `
   --net=host `
   -e DISPLAY=$env:DISPLAY `
   -v "F:\一些日常\xiaomi-su7:/workspace/xiaomi_cup" `
+  cyberdog_sim:v2026 `
+  bash
+```
+
+如果使用 Windows 11 WSLg，建议额外挂载 GUI 目录：
+
+```powershell
+docker run -it --name cyberdog2026 `
+  --privileged `
+  --net=host `
+  -e DISPLAY=:0 `
+  -e WAYLAND_DISPLAY=wayland-0 `
+  -e XDG_RUNTIME_DIR=/run/user/1000 `
+  -v "F:\一些日常\xiaomi-su7:/workspace/xiaomi_cup" `
+  -v "/tmp/.X11-unix:/tmp/.X11-unix" `
+  -v "/mnt/wslg:/mnt/wslg" `
   cyberdog_sim:v2026 `
   bash
 ```
@@ -134,32 +163,38 @@ python3 -m py_compile right_all/motion.py right_all/robot_state_machine_2026.py 
 
 ## 运行 2026 赛道
 
-推荐使用三个终端分别运行世界、控制器、比赛代码。
+演示和验收时必须使用 GUI 前台运行。不要用 `nohup`，不要把 Gazebo 放到后台，否则别人看不到机器狗界面。
 
-### 终端 1：启动仿真世界
+推荐使用三个可见终端分别运行世界、控制器、比赛代码。终端 1 会打开 Gazebo GUI，可以直接看到赛道和机器狗运动。
 
-Headless 模式：
+### 终端 1：启动 Gazebo GUI 世界
 
-```bash
+Windows PowerShell：
+
+```powershell
 docker exec -it cyberdog2026 bash
-cd /workspace/xiaomi_cup
-./run_2026_world_headless.sh
 ```
 
-如果需要 GUI：
+进入容器后运行：
 
 ```bash
-docker exec -it cyberdog2026 bash
 cd /workspace/xiaomi_cup
 ./run_2026_world_gui.sh
 ```
 
-等待 Gazebo 世界加载完成后再启动控制器。
+这个终端不要关闭。正常情况下会弹出 Gazebo 界面，能看到赛道和机器狗。等待 Gazebo 世界加载完成后，再启动控制器。
 
 ### 终端 2：启动 CyberDog 控制器
 
-```bash
+另开一个 PowerShell 终端：
+
+```powershell
 docker exec -it cyberdog2026 bash
+```
+
+进入容器后运行：
+
+```bash
 cd /home/cyberdog_sim
 source /opt/ros/galactic/setup.bash
 source /home/cyberdog_sim/install/setup.bash
@@ -170,30 +205,42 @@ ros2 launch cyberdog_gazebo cyberdog_control_launch.py
 
 ### 终端 3：启动比赛代码
 
-```bash
+再开一个 PowerShell 终端：
+
+```powershell
 docker exec -it cyberdog2026 bash
+```
+
+进入容器后运行：
+
+```bash
 cd /workspace/xiaomi_cup
 ./run_2026_race.sh
 ```
 
-## 一键后台运行方式
+这个终端会持续打印状态机日志。Gazebo 界面里可以看到机器狗从起点开始完整跑 2026 赛道。
 
-也可以在 Windows PowerShell 中后台启动完整流程：
+## 前台 GUI 快速提示
 
-```powershell
-docker restart cyberdog2026
-Start-Sleep -Seconds 8
+如果忘记运行顺序，可以进入容器后执行：
 
-docker exec cyberdog2026 bash -lc "cd /workspace/xiaomi_cup && nohup ./run_2026_world_headless.sh > /tmp/race2026_world.log 2>&1 &"
-Start-Sleep -Seconds 18
-
-docker exec cyberdog2026 bash -lc "cd /home/cyberdog_sim; source /opt/ros/galactic/setup.bash; source /home/cyberdog_sim/install/setup.bash; nohup ros2 launch cyberdog_gazebo cyberdog_control_launch.py > /tmp/race2026_control.log 2>&1 &"
-Start-Sleep -Seconds 18
-
-docker exec cyberdog2026 bash -lc "cd /workspace/xiaomi_cup && nohup ./run_2026_race.sh > /tmp/race2026_race.log 2>&1 &"
+```bash
+cd /workspace/xiaomi_cup
+./run_2026_full_gui.sh
 ```
 
+这个脚本只会打印三个前台终端应执行的命令，不会后台启动程序。
+
 查看关键日志：
+
+前台演示时，直接看终端 3 的输出即可。需要保存日志时，不要后台运行，可以用 `tee` 同时显示和保存：
+
+```bash
+cd /workspace/xiaomi_cup
+./run_2026_race.sh 2>&1 | tee /tmp/race2026_race.log
+```
+
+然后另开终端查看关键日志：
 
 ```powershell
 docker exec cyberdog2026 bash -lc "grep -E '状态切换|位姿 state=SEG6|SEG6_FINISH_CIRCLE|FINISH|final_lane|ERROR|WARN' /tmp/race2026_race.log | tail -n 260"
@@ -238,8 +285,9 @@ final_lane target_y=15.60 pose=(3.62,15.65) ...
 
 先看位姿和控制日志：
 
-```powershell
-docker exec cyberdog2026 bash -lc "grep -E '位姿|RecoveryStand|Fold Legs|final_|状态切换|ERROR|WARN' /tmp/race2026_race.log /tmp/race2026_control.log | tail -n 200"
+```bash
+# 在比赛代码终端直接观察输出；如果用了 tee 保存日志，再执行：
+grep -E '位姿|RecoveryStand|Fold Legs|final_|状态切换|ERROR|WARN' /tmp/race2026_race.log | tail -n 200
 ```
 
 如果 `z` 长时间低于 `0.13`，说明处在低姿态恢复阶段。当前代码在关键段落已有 `stand_reset` 和低姿态保护。
@@ -248,8 +296,9 @@ docker exec cyberdog2026 bash -lc "grep -E '位姿|RecoveryStand|Fold Legs|final
 
 查看终点圈日志：
 
-```powershell
-docker exec cyberdog2026 bash -lc "grep -E 'SEG6_FINISH_CIRCLE|FINISH|target_y=15.60|位姿 state=SEG6' /tmp/race2026_race.log | tail -n 200"
+```bash
+# 在比赛代码终端直接观察输出；如果用了 tee 保存日志，再执行：
+grep -E 'SEG6_FINISH_CIRCLE|FINISH|target_y=15.60|位姿 state=SEG6' /tmp/race2026_race.log | tail -n 200
 ```
 
 如果 `y` 停在 15.0 左右，检查 `right_all/robot_state_machine_2026.py` 中 `drive_final_y()` 的 `lane_x` 和终点圈速度。
