@@ -45,7 +45,7 @@ class MotionController(Node):
             7: {'func': self.execute_right_move, 'params': {'vel_y': -0.1}},
             8: {'func': self.execute_left_round_walk, 'params': {'vel_x': 0.1, 'yaw_rate': 0.23}},
             9: {'func': self.execute_right_round_walk, 'params': {'vel_x': 0.1, 'yaw_rate': -0.23}},
-            10: {'func': self.execute_flagstone_walk, 'params': {'vel_x': 0.1, 'height': 0.25, 'pitch': -0.2}},
+            10: {'func': self.execute_flagstone_walk, 'params': {'vel_x': 0.075, 'height': 0.285, 'pitch': -0.12, 'step_height': 0.165}},
             11: {'func': self.execute_down_walk, 'params': {}},
             12: {'func': self.execute_velocity_walk, 'params': {'vel_x': 0.12, 'vel_y': 0.0, 'yaw_rate': 0.0, 'pitch': 0.0}},
             13: {'func': self.execute_body_bump, 'params': {'vel_x': 0.45}},
@@ -346,7 +346,7 @@ class MotionController(Node):
         self._send_cmd(cmd)
         self._log_action("motion log")
 
-    def execute_flagstone_walk(self, vel_x=0.1, height=0.25, pitch=-0.2):
+    def execute_flagstone_walk(self, vel_x=0.075, height=0.285, pitch=-0.12, step_height=0.165):
         """鎵ц鐭虫澘璺鎬?mode = 10
         Args:
             vel_x: 鍓嶈繘閫熷害
@@ -362,7 +362,7 @@ class MotionController(Node):
         cmd.vel_des = [vel_x, 0.0, 0.0] 
         cmd.acc_des = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         cmd.foot_pose = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        cmd.step_height = [0.12, 0.12]
+        cmd.step_height = [step_height, step_height]
         cmd.value = 20
         cmd.duration = 0
         self._send_cmd(cmd)
