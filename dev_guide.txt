@@ -1,0 +1,1133 @@
+机器狗二次开发操作指南（比赛支持）
+
+一、概述
+
+  本文目标：详细描述铁蛋二次开发的操作步骤，便于开发者上手；
+
+  使用方法：按照文档描述步骤依次操作即可；
+
+  PC 端系统版本：Ubuntu 20.04；
+
+  文档架构如下：
+
+
+
+
+二、二次开发总体流程
+
+  铁蛋二次开发总体流程如下图所示，主要分为四个步骤：首先在 APP 上申请成为
+
+开发者；再下载官方提供的铁蛋 docker 镜像、源码；修改源码并进行编译；最后替换
+
+编译产物。
+三、步骤详述
+
+3.1 如何申请成为开发者
+
+ 申请开发者需要在铁蛋 APP 上进行操作，详细步骤如下：
+
+ 1）下载 APP 并登陆 APP；
+
+ 2）APP 中点击 设置--》通用--》开发者申请；
+
+
+
+
+ 3）查看开发用户协议和管理协议，勾选接受协议，并点击同意下一步按钮；
+
+
+
+
+ 4）填写开发者信息，身份信息必须如实填写，否则无法通过；
+ 5）开发者个人信息填写完毕，点击下一步按钮，等待官方审核，一般需要 1-2 个
+
+工作日；
+
+
+
+
+ 6）官方审核通过，再次进入 APP 设置--》通用--》开发者申请界面，点击审核
+
+通过，立即解锁按钮解锁铁蛋。
+
+
+
+
+3.2 构建 docker 镜像与源码下载
+
+  进行二次开发需要先在自己的 Ubuntu20.04 系统上制作 docker 镜像,并下载源
+
+  码。
+3.2.1 docker 镜像制作
+
+  1）根据自己的系统版本，安装好 docker 后，加载赛事提供的 docker 镜像文
+
+件（23.8G）；
+
+
+
+
+  Plaintext
+
+  docker --version   # 查看 docker 镜像版本
+
+  sudo docker load < carpo_arm64.tar   #加载赛事提供的 docker 镜像
+
+
+加载镜像得过程如下图：
+加载成功，如下图所示：
+  2）创建 docker 容器，建立本地目录到镜像目录的映射关系；
+
+
+  Bash
+
+  sudo docker run --privileged=true -it -v /本地目录:/镜像中的目录 镜
+
+  像名:tag bash
+
+  #这里 xxx 代表你的用户名
+
+  例如：sudo docker run --privileged=true -it -v
+
+  /home/xxx/cyberdog_ws:/home/builder/cyberdog_ws myimage:1.0.0
+
+  bash
+
+
+  操作效果见下图：
+
+
+
+
+  如上图所示终端已变成 root@9f9e09571a4b，即表示已成功进入 docker。
+
+至此，docker 部分配置工作完成。docker 镜像中的文件（project）与本地目录
+
+（cyberdog）的映射见下图，两者目录结构相同。
+
+
+
+
+3.2.2 铁蛋源码下载
+
+  源码下载方式：（建议下载 github 上所有的源码包）
+
+
+  Shell
+
+  git clone https://github.com/MiRoboticsLab/cyberdog_ws.git
+      cd cyberdog_ws
+
+      vcs import . < cyberdog.repos
+
+
+
+
+  建议在 cyberdog_ws 下新建一个 src 目录，并将源码全部放到 src 目录下。
+
+
+
+
+  提供的 docker 镜像 只用于 拉取的上述仓库，和基于仓库中的
+
+cyberdog.repos 文件展开的代码。
+
+
+
+3.3 源码修改与编译
+
+
+   3.3.1 源码修改
+
+   1）进入源码目录，在终端输入 code .;
+
+   2）在 VScode 中修改源码，源码修改完毕后进行保存；
+下方图片示例了进入 connector 目录，并在 connector 模块的 connector.cpp 中
+
+增加了一句日志输出。
+
+
+
+
+3.3.2 源码编译方法
+
+   在制作好的 docker 镜像中编译步骤如下：
+
+      1）将修改好的源码放到已在本地映射好的 docker 镜像目录中；
+
+      2）在 docker 终端进入 cyberdog_ws，执行如下命令：
+
+
+         Bash
+
+         cd cyberdog_ws    #进入源码顶层目录，再输入下面编译指
+
+         令，否则可能会编译报错
+
+         source /opt/ros2/galactic/setup.bash
+
+         #第一次编译某个功能包需要使用--packages-up-to,编译该功
+
+         能包及其依赖包
+
+         colcon build --merge-install --packages-up-to
+
+                      --install-base /opt/ros2/cyberdog
+
+         $package-name
+
+         #后续升级单个功能包使用--packages-select，只编译该功能
+
+         包
+
+         colcon build --merge-install --packages-select
+                     --install-base /opt/ros2/cyberdog
+
+          $package-name
+
+
+     编译的过程和结果见下图。
+
+
+
+
+如果编译出现如下问题：
+
+
+
+
+可使用下面的命令进行编译，使用--parallel-workers <NUMBER>参数限制并行编译
+
+的线程数量。
+Shell
+
+colcon build --merge-install --packages-select
+
+   --install-base /opt/ros2/cyberdog --parallel-workers <NUMBER>
+
+$package-name
+
+
+
+3.4 编译产物替换及结果查看
+
+
+3.4.1 编译产物替换
+
+    1）先登陆铁蛋 NX 板（可参考 4.3 铁蛋登陆方法）；
+
+        2）依次将本地目录中的编译产物 lib、share 和 include 分别替换到狗中，命令
+
+    如下：
+
+
+          Bash
+
+          #本地终端 cyberdog_ws 目录
+
+          scp -r install/lib/$package-name mi@192.168.55.1:/home/mi
+
+
+
+          #狗上终端/home/mi 目录
+
+          cp -rf $package-name /opt/ros2/cyberdog/lib
+
+          sudo rm -rf $package-name
+
+          -----------------------------------------------------
+
+          ----------------
+
+          #本地终端 cyberdog_ws 目录
+
+          scp -r install/share/$package-name mi@192.168.55.1:/home/mi
+
+
+
+          #狗上终端/home/mi 目录
+
+          cp -rf $package-name /opt/ros2/cyberdog/share
+
+          sudo rm -rf $package-name
+
+          -----------------------------------------------------
+    --------------
+
+    #本地终端 cyberdog_ws 目录
+
+    scp -r install/include/$package-name mi@192.168.55.1:/home/mi
+
+
+
+    #狗上终端/home/mi 目录
+
+    cp -rf $package-name /opt/ros2/cyberdog/include
+
+    sudo rm -rf $package-name
+
+
+ 下图示例了 lib/connector 的替换过程
+
+
+
+
+ 3）编译产物替换完成后，重启机器，修改就会生效。
+
+
+3.4.2 修改结果查看
+
+ 常见的结果查看方式有：
+
+    1）动作或语音等实际效果查看；
+
+    2）输出日志查看,看是否有自己添加的日志输出；
+
+
+    Plain Text
+
+    journalctl -u cyberdog_bringup.service -fn 100000 |grep <关键字（一
+
+    般是 package-name）>
+
+
+    对 3.3.1 中的修改结果进行查看如下：
+  3）通过 ROS2 的 topic 输出、请求服务等进行查看，看是自己添加的话题或
+
+ 服务等是否有日志输出或响应；
+
+
+   Plaintext
+
+   // 对话题查看进行举例
+
+   ros2 topic list                 # 列出所有话题
+
+   ros2 topic list |grep <要查看的话题名称> # 列出要查看的话题名称
+
+   ros2 topic echo <要查看的话题名称>                 # 查看话题输出
+
+
+
+   //其他指令
+
+   ros2 service list # 查看服务列表
+
+   ros2 service call [-h] [-r N] service_name service_type [values] # call
+
+   服务
+
+   ros2 service type service_name #查看服务的数据类型
+
+
+
+   ros2 node list # 查看 ros 节点列表
+
+   ros2 node info node_name #查看 node_name 节点的信息
+
+
+
+
+四、附
+4.1 docker 安装、使用方法
+
+    Docker 安装方法：
+
+
+JSON
+
+sudo snap install docker   //建议使用这种方式，建议安装 docker 版本
+
+为:version 20.10.21
+
+
+
+或
+
+curl -fsSL https://test.docker.com -o test-docker.sh
+
+sudo sh test-docker.sh
+
+
+    使用方法可参考：https://www.runoob.com/docker/ubuntu-docker-
+
+install.html
+
+
+Shell
+
+# 查看所有本地的镜像
+
+$ sudo docker images
+
+# 查看所有的容器
+
+$ sudo docker ps -a
+
+# 启动一个容器并运行指定的镜像
+
+$ sudo docker run --privileged=true -it -v /本地目录:/镜像中的目录
+
+micr.cloud.mioffice.cn/cyberdog/carpo_arm64:1.0 bash
+
+# 进入一个正在运行的容器
+
+$ sudo docker exec -it 容器名 bash
+
+# 启动一个停止的容器
+
+$ sudo docker start 容器名
+
+# 停止一个已经启动的容器
+
+$ sudo docker stop 容器名
+
+# 删除一个容器
+$ sudo docker rm 容器名
+
+# 删除一个镜像
+
+$ sudo docker rmi 镜像名
+
+
+
+4.2 VScode 安装、使用方法
+
+   ￮       Vscode 下载链接：https://code.visualstudio.com/download
+
+   ￮       安装方法可参考：
+
+   https://www.cnblogs.com/JasonCeng/p/14182417.html
+
+
+
+4.3 ROS2 入门
+
+   ￮       ros2 官方文档：https://docs.ros.org/en/galactic/index.html
+
+   ￮       其他学习教程：
+
+       ▪   https://www.ncnynl.com/archives/201801/2251.html
+
+       ▪   https://fishros.com/d2lros2/
+
+       ▪   https://book.guyuehome.com/
+
+
+
+4.4 铁蛋登陆方法
+
+   有两种方式可以登陆铁蛋：有线登陆、无线登陆。
+
+   ￮       有线登陆
+
+       1）使用数据线连接自己的电脑和狗，将 type 口插到狗背上的调试口（如下
+
+   图所示）;
+2）在自己的电脑上开一个终端，输入 ssh mi@192.168.55.1；
+
+ 若出现下图所示 WARNING，则依次按下图所述步骤进行操作；
+
+
+
+
+    否则直接输入密码 123 进行登陆。
+ ￮   无线登陆
+
+     1）个人电脑与狗连接同一网络，在 APP 的通用界面中获取铁蛋 IP;
+
+
+
+
+     2）通过上面获取的 IP，使用 ssh 登陆，如下图所示。
+
+
+
+
+4.5 铁蛋项目开源链接
+
+ ￮   开源地址：https://github.com/MiRoboticsLab
+
+ ￮   博客地址：https://miroboticslab.github.io/blogs/#/
+
+ ￮   源码地址：https://github.com/MiRoboticsLab/cyberdog_ws
+4.6 铁蛋开发示例
+
+ 示例 demo 的 github 链接：
+
+ https://github.com/baizhongxing/Cyberdog_demo
+
+ Demo 遵循以下流程：
+
+      1.包含头文件；
+
+      2.初始化 ROS2 客户端
+
+      3.自定义节点类（自己的业务、逻辑或算法实现）
+
+      4.调用 spin 函数，并传入节点对象指针
+
+      5.资源释放
+
+
+ 4.6.1 AI Camera 数据获取
+
+ 1）源码
+
+
+    C++
+
+    // 1.包含头文件
+
+    #include "rclcpp/rclcpp.hpp"
+
+    #include "protocol/srv/camera_service.hpp"
+
+    #include <sensor_msgs/msg/image.hpp>
+
+    #include <cv_bridge/cv_bridge.h>
+
+    #include <opencv2/opencv.hpp>
+
+    #include <opencv2/highgui.hpp>
+
+    using protocol::srv::CameraService;
+
+    using namespace std::chrono_literals;
+
+
+
+    // 3.定义节点类
+
+    class CameraClient: public rclcpp::Node {
+
+    public:
+
+        CameraClient():Node("client_node_cpp") {
+      client_ = this-
+
+>create_client<CameraService>("camera_service");
+
+      RCLCPP_INFO(this->get_logger(), "客户端创建成功");
+
+      // // 等待服务就绪
+
+      while (!client_->wait_for_service(std::chrono::seconds(5))) {
+
+          if (!rclcpp::ok()) {
+
+              RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "强行终止客户
+
+端！");
+
+              return;
+
+          }
+
+          RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "服务器连接中！
+
+");
+
+      }
+
+      auto request = std::make_shared<CameraService::Request>();
+
+      CameraClient::CallCamService(false, request, 640, 480, 30);
+
+      auto future_result1 = client_->async_send_request(request);
+
+      RCLCPP_INFO(this->get_logger(), "请求 stop 服务");
+
+      std::future_status status1 =
+
+future_result1.wait_for(std::chrono::seconds(10));
+
+      printf("status1 = %d\n", status1);
+
+      // printf("result1 = %d\n", future_result1.get()->result);
+
+      CameraClient::CallCamService(true, request, 640, 480, 30);
+
+      auto future_result = client_->async_send_request(request);
+
+      RCLCPP_INFO(this->get_logger(), "请求 start 服务");
+
+      if (rclcpp::spin_until_future_complete(this-
+
+>get_node_base_interface(), future_result) ==
+
+          rclcpp::FutureReturnCode::SUCCESS) {
+
+          auto result = future_result.get();
+             std::future_status status =
+
+future_result.wait_for(std::chrono::seconds(10));
+
+             if (result->result ==
+
+CameraService::Response::RESULT_SUCCESS) {
+
+                 RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "contrl
+
+camera succeed 2！: ");
+
+                 // 订阅图像数据 topic，回调函数为：colorCallback
+
+                 color_subscriber_ = this-
+
+>create_subscription<sensor_msgs::msg::Image>(
+
+                   "image", rclcpp::SystemDefaultsQoS(),
+
+                   std::bind(&CameraClient::colorCallback, this,
+
+std::placeholders::_1));
+
+             } else {
+
+                 RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "contrl
+
+camera failed 2:");
+
+             }
+
+       } else {
+
+             RCLCPP_ERROR(this->get_logger(), "服务调用未能完成。");
+
+       }
+
+   }
+
+
+
+   void colorCallback(const sensor_msgs::msg::Image::SharedPtr
+
+msg)
+
+   {
+
+       // 将 ROS 图像消息转换为 OpenCV 格式
+
+       cv_bridge::CvImagePtr cv_image;
+
+       RCLCPP_INFO(this->get_logger(), "input colorCallback");
+
+       try
+     {
+
+         cv_image = cv_bridge::toCvCopy(msg,
+
+sensor_msgs::image_encodings::BGR8);
+
+     }
+
+     catch (cv_bridge::Exception& e)
+
+     {
+
+         RCLCPP_ERROR(this->get_logger(), "cv_bridge
+
+exception: %s", e.what());
+
+     return;
+
+     }
+
+     // 获取彩色图像
+
+     cv::Mat color_image = cv_image->image;
+
+     // 检查图像是否成功读取
+
+     if (color_image.empty()) {
+
+         std::cerr << "无法读取图像文件" << std::endl;
+
+         return;
+
+     }
+
+     // 在彩色图像上执行视觉开发操作
+
+     // ...
+
+     // 显示彩色图像
+
+     RCLCPP_INFO(this->get_logger(), "save color image");
+
+     for (int i = 0; i<1; i++)
+
+     {
+
+         bool success =
+
+cv::imwrite("/home/mi/Camera/Color_Image.png", color_image);
+
+              // 检查图像是否成功保存
+
+         if (success) {
+
+              std::cout << "图像保存成功" << std::endl;
+           } else {
+
+               std::cerr << "图像保存失败" << std::endl;
+
+               return;
+
+           }
+
+       }
+
+   }
+
+
+
+private:
+
+   rclcpp::Client<CameraService>::SharedPtr client_;
+
+   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr
+
+color_subscriber_;
+
+   // 请求打开、关闭相机操作
+
+   bool CallCamService(bool activate,
+
+std::shared_ptr<protocol::srv::CameraService::Request> &request, int
+
+height, int width, int fps)
+
+   {
+
+       request->command = activate ?
+
+
+
+protocol::srv::CameraService::Request::START_IMAGE_PUBLISH :
+
+
+
+protocol::srv::CameraService::Request::STOP_IMAGE_PUBLISH;
+
+       if (activate) {
+
+           request->height = height;
+
+           request->width = width;
+
+           request->fps = fps;
+
+       }
+
+       return true;
+
+   }
+    };
+
+
+
+    int main(int argc, char ** argv)
+
+    {
+
+
+
+         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "input main");
+
+         // 2. 初始化 ROS2 客户端；
+
+         rclcpp::init(argc, argv);
+
+         // 4. 创建客户端对象(自定义节点类型的)
+
+         auto client_node = std::make_shared<CameraClient>();
+
+         rclcpp::spin(client_node);
+
+         // 5. 释放资源
+
+         rclcpp::shutdown();
+
+         return 0;
+
+    }
+
+
+说明：
+
+￮       使用了标准的 ros 程序主框架结构，使用了 ros client 请求打开关闭相机，
+
+在打开相机时订阅图像数据
+
+￮       打开、关闭相机的服务名称为 camera_service，服务类型
+
+protocol::srv::CameraService
+
+￮       在打开相机后，订阅主题名称为 image，消息类型为
+
+sensor_msgs::msg::Image 获取图像数据
+
+￮       ros 官方发布订阅示例程序：
+
+https://docs.ros.org/en/galactic/Tutorials/Beginner-Client-
+
+Libraries/Writing-A-Simple-Cpp-Publisher-And-Subscriber.html
+
+￮       ros 官方客户服务示例程序：
+
+https://docs.ros.org/en/galactic/Tutorials/Beginner-Client-
+    Libraries/Writing-A-Simple-Cpp-Service-And-Client.html
+
+    2）编译
+
+        参考 3.3.2 节。
+
+    3）运行
+
+        在机器狗上运行当前节点
+
+
+Bash
+
+ros2 run test_my client_node_cpp --ros-args -r __ns:=/`ros2 node list |
+
+grep "mi_" | head -n 1 | cut -f 2 -d "/"`
+
+
+       查看相机状态日志
+
+
+Bash
+
+journalctl -u cyberdog_bringup.service -fn 10000 | grep camera_server
+
+
+    4）结果
+
+        正常运行后，可以在 Camera 文件夹下，看到保存的 Color_Image.png 的图
+
+片
+
+
+    4.6.2 TOF 数据获取
+
+    1）源码
+
+
+         C++
+
+         // 1.包含头文件；
+
+         #include <memory>
+
+         #include "rclcpp/rclcpp.hpp"
+
+         #include <protocol/msg/head_tof_payload.hpp>
+
+         using std::placeholders::_1;
+
+         // 3.自定义节点类
+class TofSubscriberNode: public rclcpp::Node {
+
+public:
+
+   TofSubscriberNode()
+
+   : Node("tof_node_cpp") {
+
+       RCLCPP_INFO(this->get_logger(), "订阅方创建！");
+
+       // 3-1 创建一个订阅方
+
+       /*
+
+           模板：对象的消息类型
+
+           参数：
+
+            1.话题名称
+
+            2.QOS:服务质量管理，对类长度
+
+            3.回调函数。
+
+           返回值：订阅对象的指针
+
+       */
+
+       subscription_ = this-
+
+>create_subscription<protocol::msg::HeadTofPayload>(
+
+            "head_tof_payload", 10,
+
+std::bind(&TofSubscriberNode::do_callback, this, _1));
+
+   }
+
+
+
+private:
+
+   void do_callback(const protocol::msg::HeadTofPayload::SharedPtr
+
+msg) const {
+
+       // 3-2 解析并输出数据
+
+       RCLCPP_INFO(this->get_logger(), "订阅到的消息:
+
+left_head.data[6] = %f", msg->left_head.data[6]);
+
+       RCLCPP_INFO(this->get_logger(), "订阅到的消息: msg-
+
+>right_head.data[6] = %f", msg->right_head.data[6]);
+         }
+
+         rclcpp::Subscription<protocol::msg::HeadTofPayload>::SharedPtr
+
+    subscription_;
+
+    };
+
+
+
+    int main(int argc, char const *argv[])
+
+    {
+
+         // 2.初始化 ROS2 客户端
+
+         rclcpp::init(argc, argv);
+
+
+
+         // 4.调用 spin 函数，并传入节点对象指针
+
+         rclcpp::spin(std::make_shared<TofSubscriberNode>());
+
+         // 5.资源释放
+
+         rclcpp::shutdown();
+
+         return 0;
+
+    }
+
+
+说明：
+
+￮       使用了标准的 ros 程序主框架结构，订阅 tof 数据
+
+￮       订阅主题名称为 head_tof_payload，消息类型为
+
+protocol::msg::HeadTofPayload 获取 tof 数据
+
+￮       tof 分为头部与尾部两组，相关 topic 为：head_tof_payload，
+
+rear_tof_payload。示例为获取头部 tof 数据，要获取尾部数据 topic 名称改为
+
+rear_tof_payload
+
+2）编译
+
+    参考 3.3.2 节。
+
+3）运行
+C++
+
+ros2 run demo_tof demo_tof --ros-args -r __ns:=/`ros2 node list | grep
+
+"mi_" | head -n 1 | cut -f 2 -d "/"`
+
+
+    4）结果
+
+
+
+
+4.6.3 运动 demo
+
+    1）源码
+
+
+         C++
+
+         // 1.包含头文件；
+
+         #include <memory>
+
+         #include "rclcpp/rclcpp.hpp"
+
+         #include <protocol/msg/motion_servo_cmd.hpp>
+
+         #include <protocol/msg/motion_servo_response.hpp>
+
+         #include "std_msgs/msg/float64.hpp"
+
+         #include <chrono>
+
+         using std::placeholders::_1;
+
+         // 3.自定义节点类
+
+         class MotionSubscriberNode: public rclcpp::Node {
+
+         public:
+
+            MotionSubscriberNode()
+   : Node("motion_node_cpp") {
+
+       RCLCPP_INFO(this->get_logger(), "订阅方创建！");
+
+
+
+       // 创建速度发布者，连接到 "motion_servo_cmd" topic
+
+       velocity_publisher_ =
+
+create_publisher<protocol::msg::MotionServoCmd>("motion_servo_c
+
+md", 10);
+
+
+
+       // 创建频率发布者，连接到 "velocity_frequency" topic
+
+       frequency_publisher_ =
+
+create_publisher<std_msgs::msg::Float64>("velocity_frequency", 10);
+
+
+
+   // 创建定时器，以指定频率发布速度消息
+
+       timer_ = create_wall_timer(std::chrono::milliseconds(1000),
+
+std::bind(&MotionSubscriberNode::publishVelocity, this));
+
+   }
+
+
+
+private:
+
+   void publishVelocity() {
+
+       static auto servo_response_msg =
+
+std::make_shared<protocol::msg::MotionServoCmd>();
+
+       servo_response_msg->motion_id = 111;
+
+       // servo_response_msg->code = code;
+
+       velocity_publisher_->publish(*servo_response_msg);
+
+
+
+       //       // 发布频率消息（用于演示）
+
+       // auto frequency_msg = std_msgs::msg::Float64();
+
+       // frequency_msg.data = 1.0 / 1.0; // 设置频率为 1 Hz
+         // frequency_publisher_->publish(frequency_msg);
+
+
+
+         servo_response_msg->motion_id = 303;
+
+         servo_response_msg->vel_des = std::vector<float>{0.2, 0, 0};
+
+         servo_response_msg->step_height = std::vector<float>{0.05,
+
+0.05};
+
+         // servo_response_msg->code = code;
+
+         velocity_publisher_->publish(*servo_response_msg);
+
+
+
+         // //       // 发布频率消息（用于演示）
+
+         // auto frequency_msg_motion = std_msgs::msg::Float64();
+
+         // frequency_msg_motion.data = 1.0 / 1.0; // 设置频率为 1 Hz
+
+         // frequency_publisher_->publish(frequency_msg_motion);
+
+
+
+     }
+
+     rclcpp::Publisher<protocol::msg::MotionServoCmd>::SharedPtr
+
+velocity_publisher_;
+
+     rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr
+
+frequency_publisher_;
+
+     rclcpp::TimerBase::SharedPtr timer_;
+
+};
+
+
+
+int main(int argc, char const *argv[])
+
+{
+
+     // 2.初始化 ROS2 客户端
+
+     rclcpp::init(argc, argv);
+
+     auto node = std::make_shared<MotionSubscriberNode>();
+              // 4.调用 spin 函数，并传入节点对象指针
+
+              rclcpp::spin(node);
+
+              // 5.资源释放
+
+              rclcpp::shutdown();
+
+              return 0;
+
+         }
+
+
+
+
+    说明：
+
+    ￮        使用了标准的 ros 程序主框架结构，订阅 motion 话题
+
+    ￮        订阅主题名称为 motion_servo_cmd，消息类型为
+
+    protocol::msg::MotionServoCmd 获取运行数据参数接口
+
+    ￮        可以通过定时器控制运动频率，通过 std_msgs::msg::Float64 消息类型计
+
+    算频率
+
+    2）编译
+
+        参考 3.3.2 节。
+
+    3）运行
+
+
+Bash
+
+ros2 run demo_motion demo_motion --ros-args -r __ns:=/`ros2 node list |
+
+grep "mi_" | head -n 1 | cut -f 2 -d "/"`
+
+
+    4）结果
+
+        狗子站立，然后以 0.2m/s 速度向前走
+

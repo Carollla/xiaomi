@@ -1,0 +1,850 @@
+<?xml version='1.0'?>
+<sdf version='1.6'>
+  <world name='wild_treasure_2026'>
+    <gravity>0 0 -9.8</gravity>
+    <physics name='default_physics' type='ode'>
+      <max_step_size>0.002</max_step_size>
+      <real_time_update_rate>500</real_time_update_rate>
+    </physics>
+    <include><uri>model://sun</uri></include>
+    <include><uri>model://ground_plane</uri></include>
+    
+    <model name='ground_2026'>
+      <static>true</static>
+      <pose>0 8 0 0 0 0</pose>
+      <link name='ground_2026_link'>
+      <collision name='ground_2026_collision'>
+        <geometry><box><size>4.2 16.4 0.02</size></box></geometry>
+      </collision>
+        <visual name='ground_2026_visual'>
+          <geometry><box><size>4.2 16.4 0.02</size></box></geometry>
+          <material><ambient>0.20 0.24 0.22 1</ambient><diffuse>0.20 0.24 0.22 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg1_lane'>
+      <static>true</static>
+      <pose>0 1.2 0.011 0 0 0</pose>
+      <link name='seg1_lane_link'>
+        <visual name='seg1_lane_visual'>
+          <geometry><box><size>1.0 2.4 0.004</size></box></geometry>
+          <material><ambient>0.32 0.36 0.34 1</ambient><diffuse>0.32 0.36 0.34 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg1_left_yellow'>
+      <static>true</static>
+      <pose>-0.575 1.2 0.025 0 0 0</pose>
+      <link name='seg1_left_yellow_link'>
+        <visual name='seg1_left_yellow_visual'>
+          <geometry><box><size>0.15 2.4 0.02</size></box></geometry>
+          <material><ambient>1 1 0 1</ambient><diffuse>1 1 0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg1_right_yellow'>
+      <static>true</static>
+      <pose>0.575 1.2 0.025 0 0 0</pose>
+      <link name='seg1_right_yellow_link'>
+        <visual name='seg1_right_yellow_visual'>
+          <geometry><box><size>0.15 2.4 0.02</size></box></geometry>
+          <material><ambient>1 1 0 1</ambient><diffuse>1 1 0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg1_start_line'>
+      <static>true</static>
+      <pose>0 0.0 0.03 0 0 0</pose>
+      <link name='seg1_start_line_link'>
+        <visual name='seg1_start_line_visual'>
+          <geometry><box><size>1.25 0.04 0.02</size></box></geometry>
+          <material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg2_lane'>
+      <static>true</static>
+      <pose>0 3.8 0.011 0 0 0</pose>
+      <link name='seg2_lane_link'>
+        <visual name='seg2_lane_visual'>
+          <geometry><box><size>1.0 2.8000000000000003 0.004</size></box></geometry>
+          <material><ambient>0.32 0.36 0.34 1</ambient><diffuse>0.32 0.36 0.34 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg2_left_yellow'>
+      <static>true</static>
+      <pose>-0.575 3.8 0.025 0 0 0</pose>
+      <link name='seg2_left_yellow_link'>
+        <visual name='seg2_left_yellow_visual'>
+          <geometry><box><size>0.15 2.8000000000000003 0.02</size></box></geometry>
+          <material><ambient>1 1 0 1</ambient><diffuse>1 1 0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg2_right_yellow'>
+      <static>true</static>
+      <pose>0.575 3.8 0.025 0 0 0</pose>
+      <link name='seg2_right_yellow_link'>
+        <visual name='seg2_right_yellow_visual'>
+          <geometry><box><size>0.15 2.8000000000000003 0.02</size></box></geometry>
+          <material><ambient>1 1 0 1</ambient><diffuse>1 1 0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg2_start_line'>
+      <static>true</static>
+      <pose>0 2.4 0.03 0 0 0</pose>
+      <link name='seg2_start_line_link'>
+        <visual name='seg2_start_line_visual'>
+          <geometry><box><size>1.25 0.04 0.02</size></box></geometry>
+          <material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg3_lane'>
+      <static>true</static>
+      <pose>0 6.6 0.011 0 0 0</pose>
+      <link name='seg3_lane_link'>
+        <visual name='seg3_lane_visual'>
+          <geometry><box><size>1.0 2.8 0.004</size></box></geometry>
+          <material><ambient>0.32 0.36 0.34 1</ambient><diffuse>0.32 0.36 0.34 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg3_left_yellow'>
+      <static>true</static>
+      <pose>-0.575 6.6 0.025 0 0 0</pose>
+      <link name='seg3_left_yellow_link'>
+        <visual name='seg3_left_yellow_visual'>
+          <geometry><box><size>0.15 2.8 0.02</size></box></geometry>
+          <material><ambient>1 1 0 1</ambient><diffuse>1 1 0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg3_right_yellow'>
+      <static>true</static>
+      <pose>0.575 6.6 0.025 0 0 0</pose>
+      <link name='seg3_right_yellow_link'>
+        <visual name='seg3_right_yellow_visual'>
+          <geometry><box><size>0.15 2.8 0.02</size></box></geometry>
+          <material><ambient>1 1 0 1</ambient><diffuse>1 1 0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg3_start_line'>
+      <static>true</static>
+      <pose>0 5.2 0.03 0 0 0</pose>
+      <link name='seg3_start_line_link'>
+        <visual name='seg3_start_line_visual'>
+          <geometry><box><size>1.25 0.04 0.02</size></box></geometry>
+          <material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg4_lane'>
+      <static>true</static>
+      <pose>0 9.9 0.011 0 0 0</pose>
+      <link name='seg4_lane_link'>
+        <visual name='seg4_lane_visual'>
+          <geometry><box><size>1.0 3.8000000000000007 0.004</size></box></geometry>
+          <material><ambient>0.32 0.36 0.34 1</ambient><diffuse>0.32 0.36 0.34 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg4_left_yellow'>
+      <static>true</static>
+      <pose>-0.575 9.9 0.025 0 0 0</pose>
+      <link name='seg4_left_yellow_link'>
+        <visual name='seg4_left_yellow_visual'>
+          <geometry><box><size>0.15 3.8000000000000007 0.02</size></box></geometry>
+          <material><ambient>1 1 0 1</ambient><diffuse>1 1 0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg4_right_yellow'>
+      <static>true</static>
+      <pose>0.575 9.9 0.025 0 0 0</pose>
+      <link name='seg4_right_yellow_link'>
+        <visual name='seg4_right_yellow_visual'>
+          <geometry><box><size>0.15 3.8000000000000007 0.02</size></box></geometry>
+          <material><ambient>1 1 0 1</ambient><diffuse>1 1 0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg4_start_line'>
+      <static>true</static>
+      <pose>0 8.0 0.03 0 0 0</pose>
+      <link name='seg4_start_line_link'>
+        <visual name='seg4_start_line_visual'>
+          <geometry><box><size>1.25 0.04 0.02</size></box></geometry>
+          <material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg5_lane'>
+      <static>true</static>
+      <pose>0 13.0 0.011 0 0 0</pose>
+      <link name='seg5_lane_link'>
+        <visual name='seg5_lane_visual'>
+          <geometry><box><size>1.0 2.3999999999999986 0.004</size></box></geometry>
+          <material><ambient>0.32 0.36 0.34 1</ambient><diffuse>0.32 0.36 0.34 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg5_left_yellow'>
+      <static>true</static>
+      <pose>-0.575 13.0 0.025 0 0 0</pose>
+      <link name='seg5_left_yellow_link'>
+        <visual name='seg5_left_yellow_visual'>
+          <geometry><box><size>0.15 2.3999999999999986 0.02</size></box></geometry>
+          <material><ambient>1 1 0 1</ambient><diffuse>1 1 0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg5_right_yellow'>
+      <static>true</static>
+      <pose>0.575 13.0 0.025 0 0 0</pose>
+      <link name='seg5_right_yellow_link'>
+        <visual name='seg5_right_yellow_visual'>
+          <geometry><box><size>0.15 2.3999999999999986 0.02</size></box></geometry>
+          <material><ambient>1 1 0 1</ambient><diffuse>1 1 0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg5_start_line'>
+      <static>true</static>
+      <pose>0 11.8 0.03 0 0 0</pose>
+      <link name='seg5_start_line_link'>
+        <visual name='seg5_start_line_visual'>
+          <geometry><box><size>1.25 0.04 0.02</size></box></geometry>
+          <material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg6_lane'>
+      <static>true</static>
+      <pose>0 15.1 0.011 0 0 0</pose>
+      <link name='seg6_lane_link'>
+        <visual name='seg6_lane_visual'>
+          <geometry><box><size>1.0 1.8000000000000007 0.004</size></box></geometry>
+          <material><ambient>0.32 0.36 0.34 1</ambient><diffuse>0.32 0.36 0.34 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg6_left_yellow'>
+      <static>true</static>
+      <pose>-0.575 15.1 0.025 0 0 0</pose>
+      <link name='seg6_left_yellow_link'>
+        <visual name='seg6_left_yellow_visual'>
+          <geometry><box><size>0.15 1.8000000000000007 0.02</size></box></geometry>
+          <material><ambient>1 1 0 1</ambient><diffuse>1 1 0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg6_right_yellow'>
+      <static>true</static>
+      <pose>0.575 15.1 0.025 0 0 0</pose>
+      <link name='seg6_right_yellow_link'>
+        <visual name='seg6_right_yellow_visual'>
+          <geometry><box><size>0.15 1.8000000000000007 0.02</size></box></geometry>
+          <material><ambient>1 1 0 1</ambient><diffuse>1 1 0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg6_start_line'>
+      <static>true</static>
+      <pose>0 14.2 0.03 0 0 0</pose>
+      <link name='seg6_start_line_link'>
+        <visual name='seg6_start_line_visual'>
+          <geometry><box><size>1.25 0.04 0.02</size></box></geometry>
+          <material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='finish_circle_marker'>
+      <static>true</static>
+      <pose>0 15.75 0.035 0 0 0</pose>
+      <link name='finish_circle_marker_link'>
+        <visual name='finish_circle_marker_visual'>
+          <geometry><box><size>0.9 0.9 0.012</size></box></geometry>
+          <material><ambient>0.9 0.9 0.9 1</ambient><diffuse>0.9 0.9 0.9 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='flagstone_00'>
+      <static>true</static>
+      <pose>0 0.45 0.035 0 0 0</pose>
+      <link name='flagstone_00_link'>
+      <collision name='flagstone_00_collision'>
+        <geometry><box><size>0.30 0.22 0.05</size></box></geometry>
+      </collision>
+        <visual name='flagstone_00_visual'>
+          <geometry><box><size>0.30 0.22 0.05</size></box></geometry>
+          <material><ambient>0.55 0.55 0.50 1</ambient><diffuse>0.55 0.55 0.50 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='flagstone_01'>
+      <static>true</static>
+      <pose>0 0.95 0.035 0 0 0</pose>
+      <link name='flagstone_01_link'>
+      <collision name='flagstone_01_collision'>
+        <geometry><box><size>0.30 0.22 0.05</size></box></geometry>
+      </collision>
+        <visual name='flagstone_01_visual'>
+          <geometry><box><size>0.30 0.22 0.05</size></box></geometry>
+          <material><ambient>0.55 0.55 0.50 1</ambient><diffuse>0.55 0.55 0.50 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='flagstone_02'>
+      <static>true</static>
+      <pose>0 1.45 0.035 0 0 0</pose>
+      <link name='flagstone_02_link'>
+      <collision name='flagstone_02_collision'>
+        <geometry><box><size>0.30 0.22 0.05</size></box></geometry>
+      </collision>
+        <visual name='flagstone_02_visual'>
+          <geometry><box><size>0.30 0.22 0.05</size></box></geometry>
+          <material><ambient>0.55 0.55 0.50 1</ambient><diffuse>0.55 0.55 0.50 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='flagstone_03'>
+      <static>true</static>
+      <pose>0 1.95 0.035 0 0 0</pose>
+      <link name='flagstone_03_link'>
+      <collision name='flagstone_03_collision'>
+        <geometry><box><size>0.30 0.22 0.05</size></box></geometry>
+      </collision>
+        <visual name='flagstone_03_visual'>
+          <geometry><box><size>0.30 0.22 0.05</size></box></geometry>
+          <material><ambient>0.55 0.55 0.50 1</ambient><diffuse>0.55 0.55 0.50 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg2_blue_ball_r1c1'>
+      <static>false</static>
+      <pose>-0.36 2.95 0.30 0 0 0</pose>
+      <link name='seg2_blue_ball_r1c1_link'>
+        <inertial>
+          <mass>0.06</mass>
+          <inertia><ixx>0.00024000000000000003</ixx><iyy>0.00024000000000000003</iyy><izz>0.00024000000000000003</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+        </inertial>
+        <collision name='seg2_blue_ball_r1c1_collision'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <surface><friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction></surface>
+        </collision>
+        <visual name='seg2_blue_ball_r1c1_visual'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><ambient>0.45 0.80 1.0 1</ambient><diffuse>0.45 0.80 1.0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg2_orange_ball_r1c2'>
+      <static>false</static>
+      <pose>-0.12 2.95 0.30 0 0 0</pose>
+      <link name='seg2_orange_ball_r1c2_link'>
+        <inertial>
+          <mass>0.06</mass>
+          <inertia><ixx>0.00024000000000000003</ixx><iyy>0.00024000000000000003</iyy><izz>0.00024000000000000003</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+        </inertial>
+        <collision name='seg2_orange_ball_r1c2_collision'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <surface><friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction></surface>
+        </collision>
+        <visual name='seg2_orange_ball_r1c2_visual'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><ambient>1 0.45 0.05 1</ambient><diffuse>1 0.45 0.05 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg2_blue_ball_r1c3'>
+      <static>false</static>
+      <pose>0.12 2.95 0.30 0 0 0</pose>
+      <link name='seg2_blue_ball_r1c3_link'>
+        <inertial>
+          <mass>0.06</mass>
+          <inertia><ixx>0.00024000000000000003</ixx><iyy>0.00024000000000000003</iyy><izz>0.00024000000000000003</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+        </inertial>
+        <collision name='seg2_blue_ball_r1c3_collision'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <surface><friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction></surface>
+        </collision>
+        <visual name='seg2_blue_ball_r1c3_visual'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><ambient>0.45 0.80 1.0 1</ambient><diffuse>0.45 0.80 1.0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg2_blue_ball_r1c4'>
+      <static>false</static>
+      <pose>0.36 2.95 0.30 0 0 0</pose>
+      <link name='seg2_blue_ball_r1c4_link'>
+        <inertial>
+          <mass>0.06</mass>
+          <inertia><ixx>0.00024000000000000003</ixx><iyy>0.00024000000000000003</iyy><izz>0.00024000000000000003</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+        </inertial>
+        <collision name='seg2_blue_ball_r1c4_collision'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <surface><friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction></surface>
+        </collision>
+        <visual name='seg2_blue_ball_r1c4_visual'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><ambient>0.45 0.80 1.0 1</ambient><diffuse>0.45 0.80 1.0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg2_blue_ball_r2c1'>
+      <static>false</static>
+      <pose>-0.36 3.45 0.30 0 0 0</pose>
+      <link name='seg2_blue_ball_r2c1_link'>
+        <inertial>
+          <mass>0.06</mass>
+          <inertia><ixx>0.00024000000000000003</ixx><iyy>0.00024000000000000003</iyy><izz>0.00024000000000000003</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+        </inertial>
+        <collision name='seg2_blue_ball_r2c1_collision'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <surface><friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction></surface>
+        </collision>
+        <visual name='seg2_blue_ball_r2c1_visual'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><ambient>0.45 0.80 1.0 1</ambient><diffuse>0.45 0.80 1.0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg2_blue_ball_r2c2'>
+      <static>false</static>
+      <pose>-0.12 3.45 0.30 0 0 0</pose>
+      <link name='seg2_blue_ball_r2c2_link'>
+        <inertial>
+          <mass>0.06</mass>
+          <inertia><ixx>0.00024000000000000003</ixx><iyy>0.00024000000000000003</iyy><izz>0.00024000000000000003</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+        </inertial>
+        <collision name='seg2_blue_ball_r2c2_collision'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <surface><friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction></surface>
+        </collision>
+        <visual name='seg2_blue_ball_r2c2_visual'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><ambient>0.45 0.80 1.0 1</ambient><diffuse>0.45 0.80 1.0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg2_blue_ball_r2c3'>
+      <static>false</static>
+      <pose>0.12 3.45 0.30 0 0 0</pose>
+      <link name='seg2_blue_ball_r2c3_link'>
+        <inertial>
+          <mass>0.06</mass>
+          <inertia><ixx>0.00024000000000000003</ixx><iyy>0.00024000000000000003</iyy><izz>0.00024000000000000003</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+        </inertial>
+        <collision name='seg2_blue_ball_r2c3_collision'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <surface><friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction></surface>
+        </collision>
+        <visual name='seg2_blue_ball_r2c3_visual'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><ambient>0.45 0.80 1.0 1</ambient><diffuse>0.45 0.80 1.0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg2_orange_ball_r2c4'>
+      <static>false</static>
+      <pose>0.36 3.45 0.30 0 0 0</pose>
+      <link name='seg2_orange_ball_r2c4_link'>
+        <inertial>
+          <mass>0.06</mass>
+          <inertia><ixx>0.00024000000000000003</ixx><iyy>0.00024000000000000003</iyy><izz>0.00024000000000000003</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+        </inertial>
+        <collision name='seg2_orange_ball_r2c4_collision'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <surface><friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction></surface>
+        </collision>
+        <visual name='seg2_orange_ball_r2c4_visual'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><ambient>1 0.45 0.05 1</ambient><diffuse>1 0.45 0.05 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg2_orange_ball_r3c1'>
+      <static>false</static>
+      <pose>-0.36 3.95 0.30 0 0 0</pose>
+      <link name='seg2_orange_ball_r3c1_link'>
+        <inertial>
+          <mass>0.06</mass>
+          <inertia><ixx>0.00024000000000000003</ixx><iyy>0.00024000000000000003</iyy><izz>0.00024000000000000003</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+        </inertial>
+        <collision name='seg2_orange_ball_r3c1_collision'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <surface><friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction></surface>
+        </collision>
+        <visual name='seg2_orange_ball_r3c1_visual'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><ambient>1 0.45 0.05 1</ambient><diffuse>1 0.45 0.05 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg2_blue_ball_r3c2'>
+      <static>false</static>
+      <pose>-0.12 3.95 0.30 0 0 0</pose>
+      <link name='seg2_blue_ball_r3c2_link'>
+        <inertial>
+          <mass>0.06</mass>
+          <inertia><ixx>0.00024000000000000003</ixx><iyy>0.00024000000000000003</iyy><izz>0.00024000000000000003</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+        </inertial>
+        <collision name='seg2_blue_ball_r3c2_collision'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <surface><friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction></surface>
+        </collision>
+        <visual name='seg2_blue_ball_r3c2_visual'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><ambient>0.45 0.80 1.0 1</ambient><diffuse>0.45 0.80 1.0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg2_blue_ball_r3c3'>
+      <static>false</static>
+      <pose>0.12 3.95 0.30 0 0 0</pose>
+      <link name='seg2_blue_ball_r3c3_link'>
+        <inertial>
+          <mass>0.06</mass>
+          <inertia><ixx>0.00024000000000000003</ixx><iyy>0.00024000000000000003</iyy><izz>0.00024000000000000003</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+        </inertial>
+        <collision name='seg2_blue_ball_r3c3_collision'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <surface><friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction></surface>
+        </collision>
+        <visual name='seg2_blue_ball_r3c3_visual'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><ambient>0.45 0.80 1.0 1</ambient><diffuse>0.45 0.80 1.0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg2_blue_ball_r3c4'>
+      <static>false</static>
+      <pose>0.36 3.95 0.30 0 0 0</pose>
+      <link name='seg2_blue_ball_r3c4_link'>
+        <inertial>
+          <mass>0.06</mass>
+          <inertia><ixx>0.00024000000000000003</ixx><iyy>0.00024000000000000003</iyy><izz>0.00024000000000000003</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+        </inertial>
+        <collision name='seg2_blue_ball_r3c4_collision'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <surface><friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction></surface>
+        </collision>
+        <visual name='seg2_blue_ball_r3c4_visual'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><ambient>0.45 0.80 1.0 1</ambient><diffuse>0.45 0.80 1.0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg2_blue_ball_r4c1'>
+      <static>false</static>
+      <pose>-0.36 4.45 0.30 0 0 0</pose>
+      <link name='seg2_blue_ball_r4c1_link'>
+        <inertial>
+          <mass>0.06</mass>
+          <inertia><ixx>0.00024000000000000003</ixx><iyy>0.00024000000000000003</iyy><izz>0.00024000000000000003</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+        </inertial>
+        <collision name='seg2_blue_ball_r4c1_collision'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <surface><friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction></surface>
+        </collision>
+        <visual name='seg2_blue_ball_r4c1_visual'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><ambient>0.45 0.80 1.0 1</ambient><diffuse>0.45 0.80 1.0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg2_blue_ball_r4c2'>
+      <static>false</static>
+      <pose>-0.12 4.45 0.30 0 0 0</pose>
+      <link name='seg2_blue_ball_r4c2_link'>
+        <inertial>
+          <mass>0.06</mass>
+          <inertia><ixx>0.00024000000000000003</ixx><iyy>0.00024000000000000003</iyy><izz>0.00024000000000000003</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+        </inertial>
+        <collision name='seg2_blue_ball_r4c2_collision'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <surface><friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction></surface>
+        </collision>
+        <visual name='seg2_blue_ball_r4c2_visual'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><ambient>0.45 0.80 1.0 1</ambient><diffuse>0.45 0.80 1.0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg2_blue_ball_r4c3'>
+      <static>false</static>
+      <pose>0.12 4.45 0.30 0 0 0</pose>
+      <link name='seg2_blue_ball_r4c3_link'>
+        <inertial>
+          <mass>0.06</mass>
+          <inertia><ixx>0.00024000000000000003</ixx><iyy>0.00024000000000000003</iyy><izz>0.00024000000000000003</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+        </inertial>
+        <collision name='seg2_blue_ball_r4c3_collision'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <surface><friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction></surface>
+        </collision>
+        <visual name='seg2_blue_ball_r4c3_visual'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><ambient>0.45 0.80 1.0 1</ambient><diffuse>0.45 0.80 1.0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg2_blue_ball_r4c4'>
+      <static>false</static>
+      <pose>0.36 4.45 0.30 0 0 0</pose>
+      <link name='seg2_blue_ball_r4c4_link'>
+        <inertial>
+          <mass>0.06</mass>
+          <inertia><ixx>0.00024000000000000003</ixx><iyy>0.00024000000000000003</iyy><izz>0.00024000000000000003</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+        </inertial>
+        <collision name='seg2_blue_ball_r4c4_collision'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <surface><friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction></surface>
+        </collision>
+        <visual name='seg2_blue_ball_r4c4_visual'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><ambient>0.45 0.80 1.0 1</ambient><diffuse>0.45 0.80 1.0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='curve_inner_yellow_0'>
+      <static>true</static>
+      <pose>-0.22 5.65 0.04 0 0 0.45</pose>
+      <link name='curve_inner_yellow_0_link'>
+        <visual name='curve_inner_yellow_0_visual'>
+          <geometry><box><size>0.10 1.05 0.025</size></box></geometry>
+          <material><ambient>1 1 0 1</ambient><diffuse>1 1 0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='curve_inner_yellow_1'>
+      <static>true</static>
+      <pose>0.0 6.45 0.04 0 0 0.0</pose>
+      <link name='curve_inner_yellow_1_link'>
+        <visual name='curve_inner_yellow_1_visual'>
+          <geometry><box><size>0.10 1.05 0.025</size></box></geometry>
+          <material><ambient>1 1 0 1</ambient><diffuse>1 1 0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='curve_inner_yellow_2'>
+      <static>true</static>
+      <pose>0.22 7.25 0.04 0 0 -0.45</pose>
+      <link name='curve_inner_yellow_2_link'>
+        <visual name='curve_inner_yellow_2_visual'>
+          <geometry><box><size>0.10 1.05 0.025</size></box></geometry>
+          <material><ambient>1 1 0 1</ambient><diffuse>1 1 0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='tunnel_lane_14'>
+      <static>true</static>
+      <pose>-0.36 9.85 0.04 0 0 0</pose>
+      <link name='tunnel_lane_14_link'>
+        <visual name='tunnel_lane_14_visual'>
+          <geometry><box><size>0.04 3.2 0.02</size></box></geometry>
+          <material><ambient>1 1 0 1</ambient><diffuse>1 1 0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='tunnel_lane_50'>
+      <static>true</static>
+      <pose>0.0 9.85 0.04 0 0 0</pose>
+      <link name='tunnel_lane_50_link'>
+        <visual name='tunnel_lane_50_visual'>
+          <geometry><box><size>0.04 3.2 0.02</size></box></geometry>
+          <material><ambient>1 1 0 1</ambient><diffuse>1 1 0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='tunnel_lane_86'>
+      <static>true</static>
+      <pose>0.36 9.85 0.04 0 0 0</pose>
+      <link name='tunnel_lane_86_link'>
+        <visual name='tunnel_lane_86_visual'>
+          <geometry><box><size>0.04 3.2 0.02</size></box></geometry>
+          <material><ambient>1 1 0 1</ambient><diffuse>1 1 0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='height_bar_left_post'>
+      <static>true</static>
+      <pose>-0.55 9.00 0.45 0 0 0</pose>
+      <link name='height_bar_left_post_link'>
+      <collision name='height_bar_left_post_collision'>
+        <geometry><box><size>0.06 0.06 0.90</size></box></geometry>
+      </collision>
+        <visual name='height_bar_left_post_visual'>
+          <geometry><box><size>0.06 0.06 0.90</size></box></geometry>
+          <material><ambient>1 0 0 1</ambient><diffuse>1 0 0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='height_bar_right_post'>
+      <static>true</static>
+      <pose>0.55 9.00 0.45 0 0 0</pose>
+      <link name='height_bar_right_post_link'>
+      <collision name='height_bar_right_post_collision'>
+        <geometry><box><size>0.06 0.06 0.90</size></box></geometry>
+      </collision>
+        <visual name='height_bar_right_post_visual'>
+          <geometry><box><size>0.06 0.06 0.90</size></box></geometry>
+          <material><ambient>1 0 0 1</ambient><diffuse>1 0 0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='height_limit_bar'>
+      <static>true</static>
+      <pose>0 9.00 0.45 0 0 0</pose>
+      <link name='height_limit_bar_link'>
+      <collision name='height_limit_bar_collision'>
+        <geometry><box><size>1.10 0.10 0.10</size></box></geometry>
+      </collision>
+        <visual name='height_limit_bar_visual'>
+          <geometry><box><size>1.10 0.10 0.10</size></box></geometry>
+          <material><ambient>1 0 0 1</ambient><diffuse>1 0 0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='block_obstacle_a'>
+      <static>true</static>
+      <pose>-0.22 10.10 0.10 0 0 0</pose>
+      <link name='block_obstacle_a_link'>
+      <collision name='block_obstacle_a_collision'>
+        <geometry><box><size>0.20 0.20 0.20</size></box></geometry>
+      </collision>
+        <visual name='block_obstacle_a_visual'>
+          <geometry><box><size>0.20 0.20 0.20</size></box></geometry>
+          <material><ambient>0.15 0.15 0.15 1</ambient><diffuse>0.15 0.15 0.15 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='block_obstacle_b'>
+      <static>true</static>
+      <pose>0.22 10.10 0.10 0 0 0</pose>
+      <link name='block_obstacle_b_link'>
+      <collision name='block_obstacle_b_collision'>
+        <geometry><box><size>0.20 0.20 0.20</size></box></geometry>
+      </collision>
+        <visual name='block_obstacle_b_visual'>
+          <geometry><box><size>0.20 0.20 0.20</size></box></geometry>
+          <material><ambient>0.15 0.15 0.15 1</ambient><diffuse>0.15 0.15 0.15 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='coke_bottle'>
+      <static>false</static>
+      <pose>-0.34 10.90 0.30 0 0 0</pose>
+      <link name='coke_bottle_link'>
+        <inertial><mass>0.6</mass></inertial>
+        <collision name='coke_bottle_collision'><geometry><cylinder><radius>0.08</radius><length>0.6</length></cylinder></geometry></collision>
+        <visual name='coke_bottle_visual'>
+          <geometry><cylinder><radius>0.08</radius><length>0.6</length></cylinder></geometry>
+          <material><ambient>0.08 0.03 0.02 1</ambient><diffuse>0.08 0.03 0.02 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg4_orange_ball'>
+      <static>false</static>
+      <pose>0.33 10.75 0.70 0 0 0</pose>
+      <link name='seg4_orange_ball_link'>
+        <inertial>
+          <mass>0.06</mass>
+          <inertia><ixx>0.00024000000000000003</ixx><iyy>0.00024000000000000003</iyy><izz>0.00024000000000000003</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+        </inertial>
+        <collision name='seg4_orange_ball_collision'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <surface><friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction></surface>
+        </collision>
+        <visual name='seg4_orange_ball_visual'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><ambient>1 0.45 0.05 1</ambient><diffuse>1 0.45 0.05 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg4_soccer'>
+      <static>false</static>
+      <pose>0.0 11.25 0.12 0 0 0</pose>
+      <link name='seg4_soccer_link'>
+        <inertial>
+          <mass>0.12</mass>
+          <inertia><ixx>0.00048000000000000007</ixx><iyy>0.00048000000000000007</iyy><izz>0.00048000000000000007</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+        </inertial>
+        <collision name='seg4_soccer_collision'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <surface><friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction></surface>
+        </collision>
+        <visual name='seg4_soccer_visual'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><ambient>0.95 0.95 0.95 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='seg4_goal'>
+      <static>true</static>
+      <pose>0.0 11.55 0.15 0 0 0</pose>
+      <link name='seg4_goal_link'>
+        <visual name='seg4_goal_visual'>
+          <geometry><box><size>0.50 0.08 0.30</size></box></geometry>
+          <material><ambient>0.1 0.1 0.1 0.35</ambient><diffuse>0.1 0.1 0.1 0.35</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='narrow_bridge'>
+      <static>true</static>
+      <pose>0 13.0 0.14 0 0 0</pose>
+      <link name='narrow_bridge_link'>
+      <collision name='narrow_bridge_collision'>
+        <geometry><box><size>0.32 2.25 0.18</size></box></geometry>
+      </collision>
+        <visual name='narrow_bridge_visual'>
+          <geometry><box><size>0.32 2.25 0.18</size></box></geometry>
+          <material><ambient>0.45 0.32 0.18 1</ambient><diffuse>0.45 0.32 0.18 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='bridge_jump_line'>
+      <static>true</static>
+      <pose>0 13.75 0.25 0 0 0</pose>
+      <link name='bridge_jump_line_link'>
+        <visual name='bridge_jump_line_visual'>
+          <geometry><box><size>0.42 0.04 0.02</size></box></geometry>
+          <material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='final_soccer'>
+      <static>false</static>
+      <pose>0 14.55 0.12 0 0 0</pose>
+      <link name='final_soccer_link'>
+        <inertial>
+          <mass>0.12</mass>
+          <inertia><ixx>0.00048000000000000007</ixx><iyy>0.00048000000000000007</iyy><izz>0.00048000000000000007</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+        </inertial>
+        <collision name='final_soccer_collision'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <surface><friction><ode><mu>0.4</mu><mu2>0.4</mu2></ode></friction></surface>
+        </collision>
+        <visual name='final_soccer_visual'>
+          <geometry><sphere><radius>0.1</radius></sphere></geometry>
+          <material><ambient>0.95 0.95 0.95 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name='final_goal_exit'>
+      <static>true</static>
+      <pose>0 15.05 0.16 0 0 0</pose>
+      <link name='final_goal_exit_link'>
+        <visual name='final_goal_exit_visual'>
+          <geometry><box><size>0.65 0.08 0.32</size></box></geometry>
+          <material><ambient>0.1 0.1 0.1 0.35</ambient><diffuse>0.1 0.1 0.1 0.35</diffuse></material>
+        </visual>
+      </link>
+    </model>
+  </world>
+</sdf>

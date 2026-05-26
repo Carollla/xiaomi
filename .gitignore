@@ -1,0 +1,15 @@
+/lidar_data_collection/
+/build/*
+/install/*
+/log/*
+Cyberdog2-sim-main/
+*/**/__pycache__
+*/__pycache__
+src/slope/robot_control/__pycache__
+/home/nav/cyberdog_nudt/src/Flagstone_road/robot_control/__pycache__
+/home/nav/cyberdog_nudt/src/Flagstone_road/__pycache__
+/home/nav/cyberdog_nudt/src/slope/__pycache__
+/home/nav/cyberdog_nudt/src/slope/robot_control/__pycache__
+Traditional_Lane_Detection
+/home/nav/cyberdog_nudt/.cursor
+*.mp4

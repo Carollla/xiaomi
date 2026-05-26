@@ -1,0 +1,92 @@
+       cyberdog_sim Docker 镜像
+
+                           使用说明
+1. 简介
+
+    cyberdog_sim 镜像提供了基于赛道的 cyberdog 四足机器人的 gazebo 仿真平
+台，能够使 gazebo 仿真程序直接与 cyeberdog 的控制程序 cybredog_control 进行通
+信。仿真平台及依赖均已安装编译完成。
+
+
+2. 镜像内容
+
+•   ros2-galactic（文件目录：/opt/ros/galactic）
+
+•   gazebo11
+
+•   eigen 库（文件目录：/home/eigen-git-mirror）
+
+•   lcm 通信库（文件目录：/home/lcm）
+
+•   cyberdog 功能包（文件目录：/home/cyberdog_ws，该文件包含了 cyberdog 的主
+要功能包、cyberdog 的全局管理、运控管理等 ROS 节点及通用接口库等）
+
+•   cyberdog 仿真平台（文件目录：/home/cyberdog_sim，该文件包含了必要的
+cyberdog_locomotion 及 cyberdog_simulator 两个平台。仿真提供了基于 Rviz2 的可
+视化工具，将机器人状态的 lcm 数据转发到 ROS）
+
+
+3. 推荐环境配置：
+
+•   Ubuntu20.04
+
+•   Docker 20.10.21（安装教程：
+https://docs.docker.com/engine/install/ubuntu/）
+
+
+4. 推荐机器配置：
+
+•   处理器（CPU）：推荐使用 4 核心及以上处理器
+
+•   内存（RAM）：建议 16GB 或以上
+
+•   图形处理器（GPU）：推荐使用具有一定的图形加速的 NVIDIA 独立显卡
+
+•   存储：具有 50GB 以上的存储空间，推荐使用 SSD 固态硬盘
+5. 下载 Docker 镜像
+
+文件超过 10G (10.9G)
+
+https://pan.educg.net/#/s/OPJxi7
+
+
+6. 本地导入 Docker 镜像
+
+ Plain Text
+ sudo docker load -i cyberdog_race.tar
+
+
+
+7. 授权 X Server
+
+ Plain Text
+ xhost +
+
+
+
+8. 运行 Docker 镜像
+
+ Bash
+ sudo docker run -it --privileged=true -e DISPLAY=$DISPLAY -v
+ /tmp/.X11-unix:/tmp/.X11-unix cyberdog_sim:v1
+
+
+
+9. 运行仿真程序
+
+ Plaintext
+ cd /home/cyberdog_sim
+ python3 src/cyberdog_simulator/cyberdog_gazebo/script/launchsim.py
+10. 运行运动控制管理接口程序
+
+ Shell
+ cd /home/cyberdog_ws
+ source /opt/ros/galactic/setup.bash
+ source install/setup.bash
+ ros2 run motion_manager motion_manager
+
+
+
+11. 运动控制接口参考 github 开源文档
+https://miroboticslab.github.io/blogs/#/cn/cyberdog_loco_cn
+
