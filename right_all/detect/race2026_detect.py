@@ -64,13 +64,49 @@ class Race2026Detector:
         confidence = min(1.0, 0.35 + 25.0 * area_ratio + 0.25 * fill + 0.2 * round_score)
         return Detection(True, cx, cy, area_ratio, (x, y, bw, bh), confidence)
 
+    def _blobs(self, mask, min_area_ratio=0.0008, roundish=False, limit=8):
+        h, w = mask.shape
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        detections = []
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            if area < min_area_ratio * h * w:
+                continue
+            x, y, bw, bh = cv2.boundingRect(cnt)
+            fill = area / max(1.0, float(bw * bh))
+            aspect = bw / max(1.0, float(bh))
+            round_score = max(0.0, 1.0 - abs(1.0 - aspect)) if roundish else 1.0
+            if roundish and round_score < 0.35:
+                continue
+            cx = (x + bw / 2.0) / w
+            cy = (y + bh / 2.0) / h
+            area_ratio = area / float(h * w)
+            confidence = min(1.0, 0.35 + 25.0 * area_ratio + 0.25 * fill + 0.2 * round_score)
+            detections.append(Detection(True, cx, cy, area_ratio, (x, y, bw, bh), confidence))
+        detections.sort(key=lambda det: det.area_ratio * det.confidence, reverse=True)
+        return detections[:limit]
+
     def detect_orange_ball(self, image) -> Detection:
         if image is None:
             return Detection()
-        mask1 = self._mask(image, (5, 80, 80), (24, 255, 255))
-        mask2 = self._mask(image, (0, 80, 80), (8, 255, 255))
+        mask = self.orange_mask(image)
+        return self._largest_blob(mask, min_area_ratio=0.00018, roundish=True)
+
+    def detect_orange_balls(self, image, limit=8):
+        if image is None:
+            return []
+        mask = self.orange_mask(image)
+        return self._blobs(mask, min_area_ratio=0.00012, roundish=True, limit=limit)
+
+    def orange_mask(self, image):
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        # Gazebo lighting shifts the orange balls between red-orange and yellow-orange.
+        mask1 = cv2.inRange(hsv, np.array((2, 55, 70), dtype=np.uint8), np.array((30, 255, 255), dtype=np.uint8))
+        mask2 = cv2.inRange(hsv, np.array((0, 70, 60), dtype=np.uint8), np.array((9, 255, 255), dtype=np.uint8))
         mask = cv2.bitwise_or(mask1, mask2)
-        return self._largest_blob(mask, min_area_ratio=0.00025, roundish=True)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, self.kernel3)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, self.kernel5)
+        return mask
 
     def detect_yellow_border(self, image) -> Detection:
         if image is None:
