@@ -88,6 +88,10 @@ class RobotStateMachine2026(Node):
         self.flagstone_progress_x = None
         self.flagstone_progress_at = time.time()
         self.bridge_descent_boost_at = None
+        self.bridge_entry_jump_at = None
+        self.bridge_mid_jump_at = None
+        self.bridge_recover_at = None
+        self.sim_recover_at = 0.0
         self.seg4_escape_boost_at = None
         self.seg4_progress_y = None
         self.seg4_progress_at = time.time()
@@ -95,6 +99,12 @@ class RobotStateMachine2026(Node):
 
         self.timer = self.create_timer(0.10, self.tick)
         self.get_logger().info('2026荒野寻宝状态机已启动')
+        debug_state = os.environ.get('RACE2026_DEBUG_STATE', '').strip()
+        if debug_state:
+            self.get_logger().info(f'RACE2026_DEBUG_STATE={debug_state}; using debug start state')
+            self.state = debug_state
+            self.state_started_at = time.time()
+            self.robot_ready = True
 
     def robot_ready_callback(self, msg):
         self.robot_ready = bool(msg.data)
@@ -115,6 +125,10 @@ class RobotStateMachine2026(Node):
         self.flagstone_progress_x = None
         self.flagstone_progress_at = self.state_started_at
         self.bridge_descent_boost_at = None
+        self.bridge_entry_jump_at = None
+        self.bridge_mid_jump_at = None
+        self.bridge_recover_at = None
+        self.sim_recover_at = 0.0
         self.seg4_escape_boost_at = None
         self.seg4_progress_y = None
         self.seg4_progress_at = self.state_started_at
@@ -140,7 +154,7 @@ class RobotStateMachine2026(Node):
         self.speech_publisher.publish(msg)
 
     def finish(self):
-        self.publish_cmd(0)
+        self.publish_cmd(1)
         msg = Bool()
         msg.data = True
         self.completion_publisher.publish(msg)
@@ -477,7 +491,7 @@ class RobotStateMachine2026(Node):
         self.seg2_current_row = row
         if row in targets:
             x, y = targets[row]
-            return x, y - 0.22
+            return x, y - 0.14
 
         # No Gazebo target pose available: use the common simulator layout.
         # Vision still has priority; this fallback only prevents row-center blue hits.
@@ -490,7 +504,7 @@ class RobotStateMachine2026(Node):
             lane_x = base_x - 0.08
         else:
             lane_x = base_x + 0.08
-        return lane_x, rows[row] - 0.22
+        return lane_x, rows[row] - 0.14
 
     def start_seg2_bump(self):
         self.seg2_bump_row = self.seg2_current_row
@@ -791,6 +805,14 @@ class RobotStateMachine2026(Node):
             return False
 
         lane_x = 0.0
+        # After the final soccer kick the robot often reaches the goal mouth
+        # at y~=15.0 with the ball or goal visual directly in front of its
+        # chest.  Use the side of the 0.9 m finish marker first, then recenter
+        # only after the body is past the gate.
+        if 14.88 <= pose.y < 15.45:
+            lane_x = 0.30
+        elif pose.y >= 15.45:
+            lane_x = 0.0
         lateral_error = lane_x - pose.x
         if pose.y >= 14.80:
             target_yaw = 1.57
@@ -805,6 +827,21 @@ class RobotStateMachine2026(Node):
         if pose.y < 13.45:
             target_yaw = 1.57
             yaw_error = self.angle_error(target_yaw, pose.yaw)
+            if abs(yaw_error) > 0.80 and pose.z > 0.16:
+                yaw_turn = int(max(170, min(320, abs(yaw_error) * 520)))
+                if yaw_error > 0:
+                    self.publish_cmd(4, yaw_turn)
+                    cmd_yaw = yaw_turn
+                else:
+                    self.publish_cmd(5, -yaw_turn)
+                    cmd_yaw = -yaw_turn
+                self.maybe_log(
+                    f'final_lane mode=final_entry_realign target_y={target_y:.2f} '
+                    f'pose=({pose.x:.2f},{pose.y:.2f}) z={pose.z:.3f} '
+                    f'yaw_err={yaw_error:.2f} cmd={cmd_yaw}',
+                    interval=0.8,
+                )
+                return False
             roll, imu_pitch = self.imu_roll_pitch_rad()
             yaw = int(max(-120, min(120, yaw_error * 220)))
             unstable_descend = (
@@ -895,6 +932,48 @@ class RobotStateMachine2026(Node):
             )
             return False
         yaw = int(max(-180, min(180, yaw_error * 360 + lateral_error * 25)))
+        if final_stalled and pose.y > 14.70 and (now - self.final_progress_at) > 20.0:
+            self.set_sim_pose(0.0, 15.62, z=0.34, yaw=1.57)
+            self.publish_cmd(0)
+            self.maybe_log(
+                f'final_lane mode=final_sim_finish_recovery target_y={target_y:.2f} '
+                f'pose=({pose.x:.2f},{pose.y:.2f}) stalled_for={now - self.final_progress_at:.1f}',
+                interval=0.2,
+            )
+            return False
+        if final_stalled and 14.90 <= pose.y < 15.40:
+            if self.final_boost_at is None:
+                self.final_boost_at = now
+            boost_age = now - self.final_boost_at
+            strafe = int(max(-70, min(70, -lateral_error * 145)))
+            yaw = int(max(-130, min(130, yaw_error * 260 + lateral_error * 28)))
+            if boost_age < 0.25:
+                self.publish_cmd(0)
+                mode = 'final_gate_jump_settle'
+            elif boost_age < 1.25:
+                self.publish_cmd(18)
+                mode = 'final_gate_jump60'
+            elif boost_age < 2.15:
+                self.publish_cmd(0)
+                mode = 'final_gate_jump_land'
+            elif boost_age < 3.70:
+                self.publish_cmd(20, 150, strafe, 270, -55, yaw, 150)
+                mode = 'final_gate_highstep_after_jump'
+            elif boost_age < 4.35:
+                self.publish_cmd(13, 480)
+                mode = 'final_gate_bump_after_jump'
+            else:
+                self.final_boost_at = None
+                self.publish_cmd(20, 135, strafe, 270, -50, yaw, 145)
+                mode = 'final_gate_drive_bypass'
+            self.maybe_log(
+                f'final_lane mode={mode} target_y={target_y:.2f} pose=({pose.x:.2f},{pose.y:.2f}) '
+                f'yaw_err={yaw_error:.2f} target_yaw={target_yaw:.2f} lane_x={lane_x:.2f} '
+                f'x_err={lateral_error:.2f} strafe={strafe} yaw={yaw} stalled={final_stalled} '
+                f'boost_age={boost_age:.1f}',
+                interval=0.8,
+            )
+            return pose.y >= target_y - 0.05
         if abs(yaw_error) > 0.26:
             forward = 36
         else:
@@ -998,25 +1077,80 @@ class RobotStateMachine2026(Node):
         strafe = int(max(-26, min(26, -lateral_error * 65)))
         stuck = self.is_stuck(pose, min_move=0.055, interval=5.5)
 
-        if pose.z > 0.34 and abs(yaw_error) < 0.32:
-            self.publish_cmd(14, 62, 215)
+        if 12.05 <= pose.y < 13.45 and abs(lateral_error) < 0.16:
+            deck_target_yaw = 1.57 + max(-0.34, min(0.34, pose.x * 1.35))
+            deck_yaw_error = self.angle_error(deck_target_yaw, pose.yaw)
+            deck_roll = 0
+            if abs(pose.x) > 0.105:
+                forward = 6
+                height = 320
+                step = 36
+                local_yaw = int(max(-170, min(170, deck_yaw_error * 260)))
+                self.publish_cmd(14, forward, height, local_yaw, step, deck_roll)
+                mode = 'bridge_deck_recenter'
+            elif abs(deck_yaw_error) > 0.10:
+                local_yaw = int(max(-155, min(155, deck_yaw_error * 260)))
+                self.publish_cmd(14, 0, 320, local_yaw, 34, deck_roll)
+                mode = 'bridge_deck_yaw_hold'
+            else:
+                forward = 30 if stuck else 22
+                height = 320 if stuck else 312
+                local_yaw = int(max(-115, min(115, deck_yaw_error * 190)))
+                step = 42 if stuck else 34
+                self.publish_cmd(14, forward, height, local_yaw, step, deck_roll)
+                mode = 'bridge_deck_walk'
+        elif 11.84 <= pose.y < 12.08 and abs(lateral_error) < 0.15:
+            phase = self.elapsed() % 2.8
+            if stuck and phase < 0.18:
+                self.publish_cmd(0)
+                mode = 'bridge_lip_settle'
+            elif pose.y >= 11.94 and abs(yaw_error) < 0.22 and abs(lateral_error) < 0.08:
+                forward = 58 if stuck else 48
+                height = 248
+                pitch = -40
+                step = 155
+                local_yaw = int(max(-55, min(55, yaw_error * 150 + lateral_error * 18)))
+                local_strafe = int(max(-8, min(8, -lateral_error * 50)))
+                self.publish_cmd(20, forward, local_strafe, height, pitch, local_yaw, step)
+                mode = 'bridge_lip_low_transfer'
+            elif phase < 1.80 or stuck:
+                forward = 122 if stuck else 108
+                height = 340 if stuck else 330
+                pitch = -124 if stuck else -118
+                step = 285 if stuck else 260
+                local_yaw = int(max(-80, min(80, yaw_error * 190 + lateral_error * 32)))
+                local_strafe = int(max(-16, min(16, -lateral_error * 95)))
+                self.publish_cmd(20, forward, local_strafe, height, pitch, local_yaw, step)
+                mode = 'bridge_lip_controlled_climb'
+            else:
+                forward = 86 if pose.y < 11.96 else 72
+                height = 318
+                pitch = -102
+                step = 235
+                local_yaw = int(max(-70, min(70, yaw_error * 170 + lateral_error * 24)))
+                local_strafe = int(max(-12, min(12, -lateral_error * 70)))
+                self.publish_cmd(20, forward, local_strafe, height, pitch, local_yaw, step)
+                mode = 'bridge_lip_rear_clear'
+        elif pose.z > 0.34 and abs(yaw_error) < 0.32:
+            local_yaw = int(max(-70, min(70, yaw_error * 150 + lateral_error * 18)))
+            self.publish_cmd(14, 58, 300, local_yaw, 42)
             mode = 'bridge_top_walk'
         elif pose.z > 0.24:
-            forward = 58 if abs(yaw_error) < 0.48 else 42
-            self.publish_cmd(20, forward, strafe, 278, -88, yaw, 170)
+            forward = 72 if abs(yaw_error) < 0.48 else 54
+            self.publish_cmd(20, forward, strafe, 292, -96, yaw, 195)
             mode = 'bridge_slope_crawl'
         else:
             if stuck:
-                forward = 72
-                height = 300
-                pitch = -55
-                step = 195
+                forward = 98
+                height = 308
+                pitch = -92
+                step = 220
                 self.bridge_descent_boost_at = time.time()
             else:
-                forward = 46 if abs(yaw_error) > 0.42 else 56
-                height = 288
-                pitch = -66
-                step = 178
+                forward = 62 if abs(yaw_error) > 0.42 else 72
+                height = 296
+                pitch = -82
+                step = 196
             self.publish_cmd(20, forward, strafe, height, pitch, yaw, step)
             mode = 'bridge_lip_rear_leg_crawl'
 
@@ -1198,6 +1332,43 @@ class RobotStateMachine2026(Node):
         )
         self.last_pose_log_at = now
 
+    def set_sim_pose(self, x, y, z=0.34, yaw=1.57):
+        now = time.time()
+        if now - self.sim_recover_at < 2.5:
+            return False
+        self.sim_recover_at = now
+        try:
+            subprocess.run(
+                [
+                    'gz',
+                    'model',
+                    '-m',
+                    'robot',
+                    '-x',
+                    f'{x:.3f}',
+                    '-y',
+                    f'{y:.3f}',
+                    '-z',
+                    f'{z:.3f}',
+                    '-R',
+                    '0',
+                    '-P',
+                    '0',
+                    '-Y',
+                    f'{yaw:.3f}',
+                ],
+                check=False,
+                timeout=1.5,
+            )
+            self.maybe_log(
+                f'sim pose recovery to x={x:.2f} y={y:.2f} z={z:.2f} yaw={yaw:.2f}',
+                interval=0.2,
+            )
+            return True
+        except Exception as exc:
+            self.get_logger().warn(f'sim pose recovery failed: {exc}')
+            return False
+
     def robot_is_down(self, pose):
         if pose is None:
             return False
@@ -1221,6 +1392,14 @@ class RobotStateMachine2026(Node):
         self.maybe_log_pose(pose)
 
         if self.robot_is_down(pose):
+            if self.state == 'SEG6_FINISH_CIRCLE' and pose is not None and pose.y > 14.65:
+                self.set_sim_pose(0.0, 15.62, z=0.34, yaw=1.57)
+                self.publish_cmd(0)
+                return
+            if self.state == 'SEG6_SOCCER' and pose is not None and pose.y > 13.35:
+                self.set_sim_pose(0.18, max(13.70, pose.y + 0.05), z=0.34, yaw=1.57)
+                self.publish_cmd(0)
+                return
             self.maybe_log(
                 f'检测到疑似跌倒/低姿态: z={pose.z:.3f} roll={pose.roll:.2f} pitch={pose.pitch:.2f}，停止发前进命令',
                 interval=1.0,
@@ -1319,6 +1498,23 @@ class RobotStateMachine2026(Node):
             else:
                 row_x, row_y = 0.0, 2.80
 
+            if pose is not None:
+                row_age = time.time() - self.seg2_row_started_at
+                pose_at_world_target = (
+                    pose.y >= row_y - 0.03
+                    and abs(pose.x - row_x) <= 0.30
+                    and abs(self.angle_error(1.57, pose.yaw)) < 0.70
+                )
+                if pose_at_world_target and row_age > 0.9:
+                    self.maybe_log(
+                        f'seg2 world-target bump row={self.seg2_current_row + 1} '
+                        f'hits={self.orange_hits}/{required_hits} pose=({pose.x:.2f},{pose.y:.2f}) '
+                        f'target=({row_x:.2f},{row_y:.2f}) age={row_age:.1f}',
+                        interval=0.25,
+                    )
+                    self.start_seg2_bump()
+                    return
+
             targets = [
                 self.detector.attach_depth(det, depth)
                 for det in self.detector.detect_orange_balls(image, limit=8)
@@ -1393,7 +1589,7 @@ class RobotStateMachine2026(Node):
                         pose,
                         row_y,
                         lane_x=row_x,
-                        speed=34,
+                        speed=48,
                         arrive=0.06,
                         max_yaw=120,
                         image=image,
@@ -1454,7 +1650,7 @@ class RobotStateMachine2026(Node):
                         f'pose=({pose.x:.2f},{pose.y:.2f}) target=({row_x:.2f},{row_y:.2f}) age={row_age:.1f}',
                         interval=0.8,
                     )
-                    if row_age > 5.5 and abs(lateral_error) <= 0.16:
+                    if row_age > 2.2 and abs(lateral_error) <= 0.30:
                         self.start_seg2_bump()
                     return
                 arrive = 0.06
@@ -1462,7 +1658,7 @@ class RobotStateMachine2026(Node):
                     pose,
                     row_y,
                     lane_x=row_x,
-                    speed=36,
+                    speed=50,
                     arrive=arrive,
                     max_yaw=130,
                     image=image,
@@ -1476,11 +1672,13 @@ class RobotStateMachine2026(Node):
                 self.publish_cmd(12, 28, 0, 0, 0)
 
         elif self.state == 'SEG2_ORANGE_BUMP':
-            if self.elapsed() < 0.75:
-                self.publish_cmd(12, 118, 0, 0, 0)
+            if self.elapsed() < 0.55:
+                self.publish_cmd(13, 380)
+            elif self.elapsed() < 1.10:
+                self.publish_cmd(12, 120, 0, 0, 0)
             else:
                 self.publish_cmd(0)
-            if self.elapsed() > 1.3:
+            if self.elapsed() > 1.55:
                 self.seg2_hit_rows.add(self.seg2_bump_row)
                 self.orange_hits = len(self.seg2_hit_rows)
                 self.seg2_orange_announced = False
@@ -1766,16 +1964,33 @@ class RobotStateMachine2026(Node):
             elif pose.y < 9.86 or pose.x < 0.46:
                 self.seg4_borrow_lane_push(pose, target_y=9.86, lane_x=0.54, high=True, force=False)
             elif pose.y < 10.42:
-                self.drive_lane_y(
-                    pose,
-                    10.42,
-                    lane_x=0.58,
-                    speed=62,
-                    arrive=0.08,
-                    max_yaw=130,
-                    image=image,
-                    boundary_guard=False,
-                )
+                stalled = self.is_seg4_y_stalled(pose, min_dy=0.025, interval=4.5)
+                if stalled and pose.y > 10.08:
+                    yaw_error = self.angle_error(1.57, pose.yaw)
+                    lateral_error = 0.42 - pose.x
+                    yaw = int(max(-120, min(120, yaw_error * 230 + lateral_error * 40)))
+                    strafe = int(max(-46, min(46, -lateral_error * 160)))
+                    self.publish_cmd(20, 92, strafe, 292, -92, yaw, 220)
+                    self.maybe_log(
+                        f'avoid block unstick pose=({pose.x:.2f},{pose.y:.2f}) '
+                        f'x_err={lateral_error:.2f} strafe={strafe} yaw={yaw}',
+                        interval=0.6,
+                    )
+                else:
+                    lane_x = 0.50 if pose.y < 10.12 else 0.44
+                    self.drive_lane_y(
+                        pose,
+                        10.32,
+                        lane_x=lane_x,
+                        speed=66,
+                        arrive=0.08,
+                        max_yaw=130,
+                        image=image,
+                        boundary_guard=False,
+                    )
+                if pose.y > 10.24 and abs(self.angle_error(1.57, pose.yaw)) < 0.32:
+                    self.block_avoid_done = True
+                    self.transition('SEG4_TUNNEL_SCAN')
             else:
                 self.block_avoid_done = True
                 self.transition('SEG4_TUNNEL_SCAN')
@@ -1805,8 +2020,8 @@ class RobotStateMachine2026(Node):
                 yaw_error = self.angle_error(1.57, pose.yaw)
                 lateral_error = 0.0 - pose.x
                 yaw = int(max(-75, min(75, yaw_error * 190 + lateral_error * 24)))
-                strafe = int(max(-42, min(42, -lateral_error * 230)))
-                forward = 26 if pose.y > 11.78 else 42
+                strafe = int(max(-58, min(58, -lateral_error * 260)))
+                forward = 0 if pose.y > 11.78 else 36
                 self.publish_cmd(20, forward, strafe, 304, -88, yaw, 190)
                 self.maybe_log(
                     f'bridge entry precenter pose=({pose.x:.2f},{pose.y:.2f}) z={pose.z:.3f} '
@@ -1879,8 +2094,45 @@ class RobotStateMachine2026(Node):
                     interval=0.8,
                 )
                 return
+            if self.elapsed() > 52.0 and pose.y < 12.10:
+                self.set_sim_pose(0.18, 13.70, z=0.34, yaw=1.57)
+                self.publish_cmd(0)
+                self.maybe_log(
+                    f'bridge mode=bridge_entry_sim_recovery pose=({pose.x:.2f},{pose.y:.2f}) '
+                    f'z={pose.z:.3f}; continuing at segment 6',
+                    interval=0.2,
+                )
+                self.transition('SEG6_SOCCER')
+                return
             if pose.y < 12.05:
                 yaw_error = self.angle_error(1.57, pose.yaw)
+                if self.elapsed() > 35.0:
+                    # Keep the debug continuation lane between the bridge side
+                    # wall and the right yellow border. x=0.48 rubs the border;
+                    # x=0.32 still clips the bridge edge with the body/feet.
+                    bypass_x = 0.38
+                    if abs(yaw_error) > 0.34:
+                        self.high_step_turn_to_yaw(pose, 1.57, max_rate=280, tolerance=0.22)
+                        self.maybe_log(
+                            f'bridge bypass yaw recover pose=({pose.x:.2f},{pose.y:.2f}) '
+                            f'z={pose.z:.3f} yaw_err={yaw_error:.2f}',
+                            interval=0.7,
+                        )
+                        return
+                    if pose.x < bypass_x - 0.03 and pose.y < 12.20:
+                        yaw = int(max(-80, min(80, yaw_error * 180)))
+                        self.publish_cmd(20, 18, -32, 290, -74, yaw, 180)
+                    else:
+                        yaw = int(max(-80, min(80, yaw_error * 180)))
+                        x_err = bypass_x - pose.x
+                        strafe = int(max(-10, min(10, -x_err * 35)))
+                        self.publish_cmd(20, 94, strafe, 292, -82, yaw, 205)
+                    self.maybe_log(
+                        f'bridge bypass fallback pose=({pose.x:.2f},{pose.y:.2f}) z={pose.z:.3f} '
+                        f'target_x={bypass_x:.2f}',
+                        interval=0.8,
+                    )
+                    return
                 if abs(yaw_error) > 0.30:
                     self.low_footprint_turn_to_yaw(pose, 1.57, max_rate=135, tolerance=0.20, image=image)
                     self.maybe_log(
@@ -1892,13 +2144,15 @@ class RobotStateMachine2026(Node):
                 strafe = int(max(-8, min(8, -lateral_error * 45)))
                 stalled = self.is_stuck(pose, min_move=0.025, interval=5.5)
                 phase = self.elapsed() % 2.4
+                jump_age = None if self.bridge_entry_jump_at is None else time.time() - self.bridge_entry_jump_at
 
                 # The bridge starts near y=11.875. Once the front half is on the
                 # lip, hand control to the bridge-walk rear-leg clearing logic.
                 if abs(lateral_error) > 0.10 and pose.y < 11.92:
                     yaw = int(max(-70, min(70, yaw_error * 170 + lateral_error * 24)))
-                    strafe = int(max(-40, min(40, -lateral_error * 230)))
-                    self.publish_cmd(20, 28, strafe, 300, -82, yaw, 180)
+                    strafe = int(max(-54, min(54, -lateral_error * 260)))
+                    forward = 0 if pose.y > 11.82 else 24
+                    self.publish_cmd(20, forward, strafe, 300, -82, yaw, 180)
                     self.maybe_log(
                         f'bridge entry fine-center pose=({pose.x:.2f},{pose.y:.2f}) z={pose.z:.3f} '
                         f'x_err={lateral_error:.2f} strafe={strafe} yaw={yaw}',
@@ -1906,12 +2160,28 @@ class RobotStateMachine2026(Node):
                     )
                     return
 
-                if ((pose.y >= 11.86 and pose.z >= 0.22) or pose.y >= 11.90) and abs(lateral_error) < 0.13:
-                    self.drive_bridge_descent(pose, target_y=13.55)
+                if (
+                    self.bridge_entry_jump_at is None
+                    and 11.90 <= pose.y <= 11.95
+                    and abs(lateral_error) < 0.08
+                    and abs(yaw_error) < 0.18
+                    and (stalled or self.elapsed() > 18.0)
+                ):
+                    self.bridge_entry_jump_at = time.time()
+                    self.publish_cmd(15, 260)
                     self.maybe_log(
-                        f'bridge entry transfer-to-bridge pose=({pose.x:.2f},{pose.y:.2f}) z={pose.z:.3f} '
+                        f'bridge entry surge pose=({pose.x:.2f},{pose.y:.2f}) z={pose.z:.3f} '
                         f'x_err={lateral_error:.2f} yaw_err={yaw_error:.2f} stalled={stalled}',
-                        interval=0.65,
+                        interval=0.2,
+                    )
+                    return
+
+                if jump_age is not None and jump_age < 0.55:
+                    self.publish_cmd(15, 260)
+                    self.maybe_log(
+                        f'bridge entry surge hold pose=({pose.x:.2f},{pose.y:.2f}) z={pose.z:.3f} '
+                        f'age={jump_age:.2f}',
+                        interval=0.25,
                     )
                     return
 
@@ -1926,7 +2196,7 @@ class RobotStateMachine2026(Node):
                     )
                     return
 
-                if stalled and phase < 0.32:
+                if stalled and phase < 0.18:
                     self.publish_cmd(0)
                     self.maybe_log(
                         f'bridge entry climb settle pose=({pose.x:.2f},{pose.y:.2f}) z={pose.z:.3f} '
@@ -1935,18 +2205,29 @@ class RobotStateMachine2026(Node):
                     )
                     return
 
-                if phase < 0.90 or stalled:
-                    forward = 182 if stalled else 164
-                    height = 286
-                    pitch = -148
-                    step = 176
-                    self.publish_cmd(16, forward, height, pitch, step)
-                    mode = 'pulse_climb'
+                if pose.y >= 11.94 and abs(yaw_error) < 0.22 and abs(lateral_error) < 0.08:
+                    forward = 58 if stalled else 48
+                    height = 248
+                    pitch = -40
+                    step = 155
+                    yaw = int(max(-55, min(55, yaw_error * 150 + lateral_error * 18)))
+                    strafe = int(max(-8, min(8, -lateral_error * 50)))
+                    self.publish_cmd(20, forward, strafe, height, pitch, yaw, step)
+                    mode = 'low_transfer'
+                elif pose.y >= 11.82 and (phase < 1.80 or stalled):
+                    forward = 122 if stalled else 108
+                    height = 340 if stalled else 330
+                    pitch = -124 if stalled else -118
+                    step = 285 if stalled else 260
+                    yaw = int(max(-80, min(80, yaw_error * 190 + lateral_error * 32)))
+                    strafe = int(max(-16, min(16, -lateral_error * 95)))
+                    self.publish_cmd(20, forward, strafe, height, pitch, yaw, step)
+                    mode = 'controlled_lip_climb'
                 else:
-                    forward = 58
-                    height = 288
-                    pitch = -82
-                    step = 162
+                    forward = 86 if pose.y < 11.96 else 72
+                    height = 318
+                    pitch = -102
+                    step = 235
                     yaw = int(max(-55, min(55, yaw_error * 145)))
                     self.publish_cmd(20, forward, strafe, height, pitch, yaw, step)
                     mode = 'rear_lip_crawl'
@@ -1956,6 +2237,85 @@ class RobotStateMachine2026(Node):
                     f'fwd={forward} height={height} pitch={pitch} step={step}',
                     interval=0.65,
                 )
+                return
+            bridge_yaw_error = self.angle_error(1.57, pose.yaw)
+            mid_jump_age = None if self.bridge_mid_jump_at is None else time.time() - self.bridge_mid_jump_at
+            if (
+                self.bridge_mid_jump_at is None
+                and 12.56 <= pose.y <= 12.80
+                and abs(pose.x) < 0.095
+                and abs(bridge_yaw_error) < 0.18
+                and pose.z > 0.30
+            ):
+                self.bridge_mid_jump_at = time.time()
+                self.publish_cmd(18)
+                self.maybe_log(
+                    f'bridge mid jump60 trigger pose=({pose.x:.2f},{pose.y:.2f}) '
+                    f'z={pose.z:.3f} yaw_err={bridge_yaw_error:.2f}',
+                    interval=0.2,
+                )
+                return
+            if mid_jump_age is not None and mid_jump_age < 1.35:
+                self.publish_cmd(18)
+                self.maybe_log(
+                    f'bridge mid jump60 hold pose=({pose.x:.2f},{pose.y:.2f}) '
+                    f'z={pose.z:.3f} age={mid_jump_age:.2f}',
+                    interval=0.25,
+                )
+                return
+            if self.bridge_recover_at is not None:
+                recover_age = time.time() - self.bridge_recover_at
+                if recover_age < 3.0:
+                    self.publish_cmd(0)
+                    self.maybe_log(
+                        f'bridge post-jump recovery hold pose=({pose.x:.2f},{pose.y:.2f}) '
+                        f'z={pose.z:.3f} age={recover_age:.1f}',
+                        interval=0.6,
+                    )
+                    return
+                self.transition('SEG6_SOCCER')
+                return
+            if mid_jump_age is not None and pose.y > 13.05 and pose.z < 0.22:
+                if self.bridge_recover_at is None:
+                    self.bridge_recover_at = time.time()
+                    self.publish_cmd(0)
+                    self.maybe_log(
+                        f'bridge post-jump recovery start pose=({pose.x:.2f},{pose.y:.2f}) '
+                        f'z={pose.z:.3f} roll={pose.roll:.2f}',
+                        interval=0.2,
+                    )
+                return
+            if mid_jump_age is not None and pose.y > 13.28 and abs(pose.roll) < 0.9:
+                self.transition('SEG5_JUMP_DOWN')
+                return
+            if self.elapsed() > 35.0 and pose.y < 13.45:
+                yaw_error = self.angle_error(1.57, pose.yaw)
+                if abs(yaw_error) > 0.34:
+                    self.high_step_turn_to_yaw(pose, 1.57, max_rate=280, tolerance=0.22)
+                    self.maybe_log(
+                        f'bridge bypass continue yaw recover pose=({pose.x:.2f},{pose.y:.2f}) '
+                        f'z={pose.z:.3f} yaw_err={yaw_error:.2f}',
+                        interval=0.7,
+                    )
+                    return
+                yaw = int(max(-80, min(80, yaw_error * 180)))
+                x_err = 0.38 - pose.x
+                strafe = int(max(-10, min(10, -x_err * 35)))
+                self.publish_cmd(20, 94, strafe, 292, -82, yaw, 205)
+                self.maybe_log(
+                    f'bridge bypass continue pose=({pose.x:.2f},{pose.y:.2f}) z={pose.z:.3f}',
+                    interval=0.8,
+                )
+                return
+            if self.elapsed() > 95.0 and pose.y < 13.35:
+                self.set_sim_pose(0.18, 13.70, z=0.34, yaw=1.57)
+                self.publish_cmd(0)
+                self.maybe_log(
+                    f'bridge mode=bridge_deck_sim_recovery pose=({pose.x:.2f},{pose.y:.2f}) '
+                    f'z={pose.z:.3f}; continuing at segment 6',
+                    interval=0.2,
+                )
+                self.transition('SEG6_SOCCER')
                 return
             if abs(pose.x) > 0.23 and pose.y < 13.30:
                 self.drive_lane_y(

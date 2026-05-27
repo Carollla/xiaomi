@@ -1,198 +1,111 @@
 # 小米杯 CyberDog 2026 赛道代码
 
-本仓库是 2026 年小米杯 CyberDog 仿真赛道的完整代码。当前版本已经在本地 Docker 仿真环境中完整跑通 2026 赛道，并且通过真实 Gazebo 位姿判断到达终点，不是超时假完成。
+本仓库用于 2026 年“智能系统创新设计赛（小米杯）”CyberDog Gazebo 仿真赛道。
 
-## 验证结果
+当前版本已经能在可见 Gazebo GUI 中跑通 2026 六段流程演示：石径探路、荒野寻珠、曲道冲锋、深隧寻珍、孤梁稳渡、撷金建功。需要明确的是，第五段独木桥入口和第六段终点门附近仍保留了仿真恢复兜底，用于完整演示和继续调参；这不是严格赛场物理通过版本。
 
-最近一次完整仿真日志中的关键结果：
+## 当前验证状态
+
+最近一次分段验证结果：
 
 ```text
-状态切换: SEG6_SOCCER -> SEG6_FINISH_CIRCLE
-final_lane target_y=15.60 pose=(3.62,15.65) ...
-状态切换: SEG6_FINISH_CIRCLE -> FINISH
+SEG1_FLAGSTONE -> SEG1_TURN_TO_BALLS
+SEG2_ORANGE_SEARCH -> SEG2_ORANGE_BUMP   # 命中 3 个橙色球
+SEG2_EXIT -> SEG3_CURVE
+SEG3_CURVE -> SEG4_TUNNEL_SCAN
+SEG4_TO_BRIDGE -> SEG5_BRIDGE
+SEG5_BRIDGE -> SEG6_SOCCER               # 独木桥入口超时后使用仿真恢复
+SEG6_SOCCER -> SEG6_FINISH_CIRCLE
+SEG6_FINISH_CIRCLE -> FINISH             # 终点门卡住后使用仿真恢复
 ```
 
-代码里终点条件是 `pose.y > 15.55` 才允许进入 `FINISH`。日志中 `pose.y=15.65` 后才切换到 `FINISH`，因此是实际跑过终点。
+关键日志文件在容器内：
 
-## 代码入口
+```bash
+/tmp/race2026_full_visible.log
+/tmp/race2026_bridge_to_finish_debug.log
+```
 
-主要文件：
+## 主要文件
 
-- `right_all/robot_state_machine_2026.py`：2026 赛道主状态机，赛道通过策略主要在这里。
-- `right_all/motion.py`：CyberDog 运动指令封装，负责把状态机命令转换成底层 LCM 控制命令。
-- `right_all/main_2026.py`：2026 状态机入口。
-- `right_all/detect/gazebo_pose_provider.py`：Gazebo 位姿读取，用于真实位置判断。
-- `run_2026_world_gui.sh`：启动带 GUI 的 2026 仿真世界，演示和验收时使用这个脚本。
-- `run_2026_world_headless.sh`：启动 2026 headless 仿真世界，只适合无人值守调试，不适合展示。
-- `run_2026_race.sh`：启动 2026 比赛代码。
-- `run_2026_full_gui.sh`：前台 GUI 演示提示脚本，只打印三个终端的运行命令，不会后台启动。
-- `docker_run_2026.ps1`：Windows PowerShell 下的 Docker 运行辅助脚本。
+- `right_all/robot_state_machine_2026.py`：2026 赛道主状态机和分段策略。
+- `right_all/motion.py`：运动命令封装，负责把状态机命令转为底层 LCM 控制。
+- `right_all/main_2026.py`：2026 程序入口。
+- `run_2026_world_gui.sh`：前台启动 Gazebo GUI 世界。
+- `run_2026_race.sh`：前台启动比赛代码。
+- `run_2026_bridge_debug.sh`：调试入口，可用环境变量从指定赛段和位姿启动。
+- `docker_run_2026.ps1`：Windows/Docker 容器辅助脚本。
 
 ## 环境要求
 
-推荐环境：
-
 - Windows 10/11
-- Docker Desktop 已启动
-- WSL Ubuntu 20.04 可用
-- 能显示 Linux GUI 窗口。Windows 11 推荐使用 WSLg；Windows 10 可使用 VcXsrv/Xming 等 X Server。
-- 已有 2026 CyberDog 仿真镜像或镜像包
-- 本项目代码放在 Windows 路径或 WSL 路径均可
+- Docker Desktop
+- WSL Ubuntu 20.04
+- 可显示 Linux GUI 窗口，Windows 11 推荐 WSLg
+- Docker 镜像，例如从 `G:\cyberdog_race2026.tar` 导入
 
-本地测试使用：
-
-- Docker 容器名：`cyberdog2026`
-- Docker 镜像：`cyberdog_sim:v2026`
-- 容器内代码目录：`/workspace/xiaomi_cup`
-
-如果你的镜像名、容器名或挂载目录不同，需要对应替换下面命令。
-
-## 从 Gitee 拉取代码
-
-Windows PowerShell：
-
-```powershell
-cd F:\一些日常
-git clone https://gitee.com/Carollla/xiaomi-su7.git
-cd .\xiaomi-su7
-```
-
-WSL Ubuntu：
-
-```bash
-cd /mnt/f/一些日常
-git clone https://gitee.com/Carollla/xiaomi-su7.git
-cd xiaomi-su7
-```
-
-## 准备 Docker 镜像
-
-如果已经存在镜像，可以直接跳过：
-
-```powershell
-docker images
-```
-
-如果你手上是 `G:\cyberdog_race2026.tar`，在 Windows PowerShell 中导入：
+导入镜像：
 
 ```powershell
 docker load -i G:\cyberdog_race2026.tar
 docker images
 ```
 
-确认存在类似镜像：
-
-```text
-cyberdog_sim   v2026
-```
-
-如果镜像标签不同，例如导入后叫其他名字，可以先重新打标签：
+如果镜像标签不是 `cyberdog_sim:v2026`，可以重新打标签：
 
 ```powershell
 docker tag 原镜像名:原标签 cyberdog_sim:v2026
 ```
 
-## 创建并启动容器
-
-如果没有容器，使用下面命令创建。把 `F:\一些日常\xiaomi-su7` 换成你的实际仓库路径。
-
-### Windows 11 / WSLg 推荐方式
-
-如果 Docker 在 WSL 里运行，并且你的 WSL 支持 WSLg，推荐用仓库里的脚本创建容器：
+## 获取代码
 
 ```powershell
-cd F:\一些日常\xiaomi-su7
-.\docker_run_2026.ps1
+git clone https://gitee.com/Carollla/xiaomi-su7.git
+cd xiaomi-su7
 ```
 
-这个脚本会挂载 WSLg 相关目录，Gazebo GUI 窗口可以直接显示出来。
+## 启动容器
 
-### 手动创建容器
-
-```powershell
-docker run -it --name cyberdog2026 `
-  --privileged `
-  --net=host `
-  -e DISPLAY=$env:DISPLAY `
-  -v "F:\一些日常\xiaomi-su7:/workspace/xiaomi_cup" `
-  cyberdog_sim:v2026 `
-  bash
-```
-
-如果使用 Windows 11 WSLg，建议额外挂载 GUI 目录：
-
-```powershell
-docker run -it --name cyberdog2026 `
-  --privileged `
-  --net=host `
-  -e DISPLAY=:0 `
-  -e WAYLAND_DISPLAY=wayland-0 `
-  -e XDG_RUNTIME_DIR=/run/user/1000 `
-  -v "F:\一些日常\xiaomi-su7:/workspace/xiaomi_cup" `
-  -v "/tmp/.X11-unix:/tmp/.X11-unix" `
-  -v "/mnt/wslg:/mnt/wslg" `
-  cyberdog_sim:v2026 `
-  bash
-```
-
-如果容器已经创建过：
+如果已有容器：
 
 ```powershell
 docker start cyberdog2026
 docker exec -it cyberdog2026 bash
 ```
 
-如果你需要重新挂载新代码目录，旧容器需要删除后重建：
+如果需要创建容器，可使用仓库脚本：
 
 ```powershell
-docker rm -f cyberdog2026
+.\docker_run_2026.ps1
 ```
 
-然后重新执行 `docker run`。
+容器内代码目录默认是：
 
-## 编译检查
+```bash
+/workspace/xiaomi_cup
+```
 
-进入容器后执行：
+## 语法检查
 
 ```bash
 cd /workspace/xiaomi_cup
 python3 -m py_compile right_all/motion.py right_all/robot_state_machine_2026.py right_all/detect/gazebo_pose_provider.py
 ```
 
-没有输出说明语法检查通过。
+没有输出表示语法检查通过。
 
-## 运行 2026 赛道
+## 可见 GUI 运行方式
 
-演示和验收时必须使用 GUI 前台运行。不要用 `nohup`，不要把 Gazebo 放到后台，否则别人看不到机器狗界面。
+不要后台运行。为了让别人看到机器狗界面，使用三个前台终端。
 
-推荐使用三个可见终端分别运行世界、控制器、比赛代码。终端 1 会打开 Gazebo GUI，可以直接看到赛道和机器狗运动。
-
-### 终端 1：启动 Gazebo GUI 世界
-
-Windows PowerShell：
-
-```powershell
-docker exec -it cyberdog2026 bash
-```
-
-进入容器后运行：
+终端 1：启动 Gazebo GUI。
 
 ```bash
 cd /workspace/xiaomi_cup
 ./run_2026_world_gui.sh
 ```
 
-这个终端不要关闭。正常情况下会弹出 Gazebo 界面，能看到赛道和机器狗。等待 Gazebo 世界加载完成后，再启动控制器。
-
-### 终端 2：启动 CyberDog 控制器
-
-另开一个 PowerShell 终端：
-
-```powershell
-docker exec -it cyberdog2026 bash
-```
-
-进入容器后运行：
+终端 2：启动 CyberDog 控制器。
 
 ```bash
 cd /home/cyberdog_sim
@@ -201,139 +114,51 @@ source /home/cyberdog_sim/install/setup.bash
 ros2 launch cyberdog_gazebo cyberdog_control_launch.py
 ```
 
-等待控制器初始化完成，看到控制器进入可用状态后再启动比赛代码。
-
-### 终端 3：启动比赛代码
-
-再开一个 PowerShell 终端：
-
-```powershell
-docker exec -it cyberdog2026 bash
-```
-
-进入容器后运行：
+终端 3：启动 2026 比赛代码。
 
 ```bash
 cd /workspace/xiaomi_cup
-./run_2026_race.sh
+./run_2026_race.sh 2>&1 | tee /tmp/race2026_full_visible.log
 ```
-
-这个终端会持续打印状态机日志。Gazebo 界面里可以看到机器狗从起点开始完整跑 2026 赛道。
-
-## 前台 GUI 快速提示
-
-如果忘记运行顺序，可以进入容器后执行：
-
-```bash
-cd /workspace/xiaomi_cup
-./run_2026_full_gui.sh
-```
-
-这个脚本只会打印三个前台终端应执行的命令，不会后台启动程序。
 
 查看关键日志：
 
-前台演示时，直接看终端 3 的输出即可。需要保存日志时，不要后台运行，可以用 `tee` 同时显示和保存：
+```bash
+grep -E '状态切换|SEG6|FINISH|sim pose recovery|ERROR|Traceback' /tmp/race2026_full_visible.log | tail -n 260
+```
+
+## 调试入口
+
+从桥头开始调试：
 
 ```bash
 cd /workspace/xiaomi_cup
-./run_2026_race.sh 2>&1 | tee /tmp/race2026_race.log
+RACE2026_DEBUG_STATE=SEG5_BRIDGE \
+RACE2026_DEBUG_X=0.0 \
+RACE2026_DEBUG_Y=11.83 \
+RACE2026_DEBUG_Z=0.34 \
+./run_2026_bridge_debug.sh 2>&1 | tee /tmp/race2026_bridge_debug.log
 ```
 
-然后另开终端查看关键日志：
-
-```powershell
-docker exec cyberdog2026 bash -lc "grep -E '状态切换|位姿 state=SEG6|SEG6_FINISH_CIRCLE|FINISH|final_lane|ERROR|WARN' /tmp/race2026_race.log | tail -n 260"
-```
-
-## 成功判定
-
-必须同时满足：
-
-1. 日志出现 `状态切换: SEG6_SOCCER -> SEG6_FINISH_CIRCLE`
-2. 日志中终点前位姿 `pose.y > 15.55`
-3. 日志出现 `状态切换: SEG6_FINISH_CIRCLE -> FINISH`
-
-示例：
-
-```text
-final_lane target_y=15.60 pose=(3.62,15.65) ...
-状态切换: SEG6_FINISH_CIRCLE -> FINISH
-```
-
-如果只看到 `FINISH`，但没有真实位姿 `y > 15.55`，不能算真实通过。本版本已经去掉了靠超时直接完成的逻辑。
-
-## 赛道策略概览
-
-状态机按 2026 赛道拆分：
-
-1. `SEG1_FLAGSTONE`：石板路，高抬腿步态通过。
-2. `SEG1_TURN_TO_BALLS`：转向进入球区。
-3. `SEG2_ENTER_BALLS`：进入橙球区域，加入低姿态保护，避免横移导致趴下。
-4. `SEG2_ORANGE_SEARCH`：橙球区域前进，通过检测和位姿继续推进。
-5. `SEG3_CURVE`：弯道/曲线路段，按车道位姿推进。
-6. `SEG4_TUNNEL_SCAN`：隧道搜索区，按位姿进入桥前区。
-7. `SEG5_BRIDGE`：窄桥与桥尾，通过桥头爬升、桥面车道控制、桥尾触发跳下桥。
-8. `SEG5_JUMP_DOWN`：桥尾短跳/下桥，并有硬切出保护，避免卡在跳桥状态。
-9. `SEG6_SOCCER`：终点前通道，带低姿态恢复、航向恢复和卡点 boost。
-10. `SEG6_FINISH_CIRCLE`：终点圈，沿真实终点方向推进到 `pose.y > 15.55`。
-11. `FINISH`：发布完成消息。
-
-## 常见问题
-
-### 1. 机器狗趴下不动
-
-先看位姿和控制日志：
+从终点入口开始调试：
 
 ```bash
-# 在比赛代码终端直接观察输出；如果用了 tee 保存日志，再执行：
-grep -E '位姿|RecoveryStand|Fold Legs|final_|状态切换|ERROR|WARN' /tmp/race2026_race.log | tail -n 200
+cd /workspace/xiaomi_cup
+RACE2026_DEBUG_STATE=SEG6_FINISH_CIRCLE \
+RACE2026_DEBUG_X=0.0 \
+RACE2026_DEBUG_Y=14.85 \
+RACE2026_DEBUG_Z=0.34 \
+./run_2026_bridge_debug.sh 2>&1 | tee /tmp/race2026_finish_debug.log
 ```
 
-如果 `z` 长时间低于 `0.13`，说明处在低姿态恢复阶段。当前代码在关键段落已有 `stand_reset` 和低姿态保护。
+## 已知限制
 
-### 2. 没有进入 FINISH
+- 第五段独木桥入口仍没有做到稳定物理爬桥，当前超过阈值后会用 `gz model` 恢复到第六段入口附近继续演示。
+- 第六段终点门附近仍可能卡在 `y≈15.0`，当前超过阈值后会恢复到终点圈内并触发 `FINISH`。
+- 因此当前版本适合 GUI 展示、流程调试和继续优化，不应声称已经严格符合正式比赛全自主物理通过。
 
-查看终点圈日志：
+## 下一步优化方向
 
-```bash
-# 在比赛代码终端直接观察输出；如果用了 tee 保存日志，再执行：
-grep -E 'SEG6_FINISH_CIRCLE|FINISH|target_y=15.60|位姿 state=SEG6' /tmp/race2026_race.log | tail -n 200
-```
-
-如果 `y` 停在 15.0 左右，检查 `right_all/robot_state_machine_2026.py` 中 `drive_final_y()` 的 `lane_x` 和终点圈速度。
-
-### 3. Docker 中找不到代码
-
-检查挂载：
-
-```powershell
-docker exec cyberdog2026 bash -lc "ls -la /workspace/xiaomi_cup | head"
-```
-
-如果目录为空，说明 `docker run -v` 的宿主机路径写错了，需要删除容器后重新创建。
-
-### 4. ROS2 环境命令找不到
-
-进入容器后重新 source：
-
-```bash
-source /opt/ros/galactic/setup.bash
-source /home/cyberdog_sim/install/setup.bash
-```
-
-## 维护说明
-
-调试主要看：
-
-```bash
-right_all/robot_state_machine_2026.py
-```
-
-每次修改后建议先运行：
-
-```bash
-python3 -m py_compile right_all/motion.py right_all/robot_state_machine_2026.py right_all/detect/gazebo_pose_provider.py
-```
-
-再完整启动仿真验证。不要只依赖状态超时，最终必须看 Gazebo 位姿是否满足 `pose.y > 15.55`。
+- 继续调独木桥入口步态，目标是取消 `bridge_entry_sim_recovery`。
+- 继续调终点门前足球/出口交互，目标是取消 `final_sim_finish_recovery`。
+- 将第五、六段的兜底逻辑改为只在本地调试开关开启时启用。

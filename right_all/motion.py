@@ -49,7 +49,7 @@ class MotionController(Node):
             11: {'func': self.execute_down_walk, 'params': {}},
             12: {'func': self.execute_velocity_walk, 'params': {'vel_x': 0.12, 'vel_y': 0.0, 'yaw_rate': 0.0, 'pitch': 0.0}},
             13: {'func': self.execute_body_bump, 'params': {'vel_x': 0.45}},
-            14: {'func': self.execute_bridge_walk, 'params': {'vel_x': 0.08, 'height': 0.18}},
+            14: {'func': self.execute_bridge_walk, 'params': {'vel_x': 0.08, 'height': 0.18, 'yaw_rate': 0.0, 'step_height': 0.045, 'roll': 0.0}},
             15: {'func': self.execute_jump_down, 'params': {'vel_x': 0.35}},
             16: {'func': self.execute_bridge_entry_climb, 'params': {'vel_x': 0.16, 'height': 0.26, 'pitch': -0.16, 'step_height': 0.14}},
             17: {'func': self.execute_jump3d_x30, 'params': {}},
@@ -138,14 +138,14 @@ class MotionController(Node):
                     self.active_params = {}
                     self.get_logger().info("motion log")
 
-    def _send_locomotion(self, vel_x=0.0, vel_y=0.0, yaw_rate=0.0, pitch=0.0, height=0.0, gait_id=27, step_height=0.06, value=0):
+    def _send_locomotion(self, vel_x=0.0, vel_y=0.0, yaw_rate=0.0, pitch=0.0, height=0.0, gait_id=27, step_height=0.06, value=0, roll=0.0):
         cmd = robot_control_cmd_lcmt()
         cmd.mode = 11
         cmd.gait_id = gait_id
         cmd.contact = 0
         cmd.life_count += 1
         cmd.pos_des = [0.0, 0.0, height]
-        cmd.rpy_des = [0.0, pitch, 0.0]
+        cmd.rpy_des = [roll, pitch, 0.0]
         cmd.vel_des = [vel_x, vel_y, yaw_rate]
         cmd.acc_des = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         cmd.ctrl_point = [0.0, 0.0, 0.0]
@@ -402,9 +402,17 @@ class MotionController(Node):
         self._send_locomotion(vel_x=vel_x, gait_id=122, step_height=0.08, value=20)
         self._log_action("motion log")
 
-    def execute_bridge_walk(self, vel_x=0.08, height=0.18):
+    def execute_bridge_walk(self, vel_x=0.08, height=0.18, yaw_rate=0.0, step_height=0.045, roll=0.0):
         """鎵ц鐙湪妗ヤ繚瀹堟參琛?mode = 14"""
-        self._send_locomotion(vel_x=vel_x, height=height, gait_id=27, step_height=0.045)
+        self._send_locomotion(
+            vel_x=vel_x,
+            height=height,
+            yaw_rate=yaw_rate,
+            gait_id=27,
+            step_height=step_height,
+            value=0,
+            roll=roll,
+        )
         self._log_action("motion log")
 
     def execute_jump_down(self, vel_x=0.35):
