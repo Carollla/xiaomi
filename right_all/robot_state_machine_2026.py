@@ -89,6 +89,8 @@ class RobotStateMachine2026(Node):
         self.flagstone_progress_at = time.time()
         self.bridge_descent_boost_at = None
         self.bridge_entry_jump_at = None
+        self.bridge_entry_jump_count = 0
+        self.bridge_entry_hop_at = None
         self.bridge_mid_jump_at = None
         self.bridge_recover_at = None
         self.sim_recover_at = 0.0
@@ -126,6 +128,8 @@ class RobotStateMachine2026(Node):
         self.flagstone_progress_at = self.state_started_at
         self.bridge_descent_boost_at = None
         self.bridge_entry_jump_at = None
+        self.bridge_entry_jump_count = 0
+        self.bridge_entry_hop_at = None
         self.bridge_mid_jump_at = None
         self.bridge_recover_at = None
         self.sim_recover_at = 0.0
@@ -2145,6 +2149,7 @@ class RobotStateMachine2026(Node):
                 stalled = self.is_stuck(pose, min_move=0.025, interval=5.5)
                 phase = self.elapsed() % 2.4
                 jump_age = None if self.bridge_entry_jump_at is None else time.time() - self.bridge_entry_jump_at
+                hop_age = None if self.bridge_entry_hop_at is None else time.time() - self.bridge_entry_hop_at
 
                 # The bridge starts near y=11.875. Once the front half is on the
                 # lip, hand control to the bridge-walk rear-leg clearing logic.
@@ -2162,25 +2167,88 @@ class RobotStateMachine2026(Node):
 
                 if (
                     self.bridge_entry_jump_at is None
-                    and 11.90 <= pose.y <= 11.95
-                    and abs(lateral_error) < 0.08
-                    and abs(yaw_error) < 0.18
-                    and (stalled or self.elapsed() > 18.0)
+                    and self.bridge_entry_jump_count < 2
+                    and 11.84 <= pose.y <= 11.94
+                    and abs(lateral_error) < 0.09
+                    and abs(yaw_error) < 0.26
+                    and (stalled or self.elapsed() > 8.0)
                 ):
                     self.bridge_entry_jump_at = time.time()
-                    self.publish_cmd(15, 260)
+                    self.bridge_entry_jump_count += 1
+                    self.publish_cmd(15, 420)
                     self.maybe_log(
                         f'bridge entry surge pose=({pose.x:.2f},{pose.y:.2f}) z={pose.z:.3f} '
+                        f'x_err={lateral_error:.2f} yaw_err={yaw_error:.2f} stalled={stalled} '
+                        f'count={self.bridge_entry_jump_count}',
+                        interval=0.2,
+                    )
+                    return
+
+                if jump_age is not None and jump_age < 0.85:
+                    self.publish_cmd(15, 420)
+                    self.maybe_log(
+                        f'bridge entry surge hold pose=({pose.x:.2f},{pose.y:.2f}) z={pose.z:.3f} '
+                        f'age={jump_age:.2f}',
+                        interval=0.25,
+                    )
+                    return
+                if jump_age is not None and jump_age < 1.25:
+                    if (
+                        self.bridge_entry_jump_count >= 2
+                        and self.bridge_entry_hop_at is None
+                        and jump_age >= 0.85
+                        and pose.y >= 11.82
+                        and abs(lateral_error) < 0.09
+                        and abs(yaw_error) < 0.26
+                    ):
+                        self.bridge_entry_hop_at = time.time()
+                        self.publish_cmd(17)
+                        self.maybe_log(
+                            f'bridge entry hop30 chain pose=({pose.x:.2f},{pose.y:.2f}) z={pose.z:.3f} '
+                            f'jump_age={jump_age:.2f}',
+                            interval=0.2,
+                        )
+                        return
+                    self.publish_cmd(0)
+                    self.maybe_log(
+                        f'bridge entry surge settle pose=({pose.x:.2f},{pose.y:.2f}) z={pose.z:.3f} '
+                        f'age={jump_age:.2f}',
+                        interval=0.25,
+                    )
+                    return
+                if jump_age is not None and jump_age > 4.0 and pose.y < 11.98:
+                    self.bridge_entry_jump_at = None
+
+                if (
+                    self.bridge_entry_hop_at is None
+                    and self.bridge_entry_jump_count >= 2
+                    and 11.84 <= pose.y < 12.03
+                    and abs(lateral_error) < 0.08
+                    and abs(yaw_error) < 0.24
+                    and (stalled or self.elapsed() > 18.0)
+                ):
+                    self.bridge_entry_hop_at = time.time()
+                    self.publish_cmd(17)
+                    self.maybe_log(
+                        f'bridge entry hop30 trigger pose=({pose.x:.2f},{pose.y:.2f}) z={pose.z:.3f} '
                         f'x_err={lateral_error:.2f} yaw_err={yaw_error:.2f} stalled={stalled}',
                         interval=0.2,
                     )
                     return
 
-                if jump_age is not None and jump_age < 0.55:
-                    self.publish_cmd(15, 260)
+                if hop_age is not None and hop_age < 1.05:
+                    self.publish_cmd(17)
                     self.maybe_log(
-                        f'bridge entry surge hold pose=({pose.x:.2f},{pose.y:.2f}) z={pose.z:.3f} '
-                        f'age={jump_age:.2f}',
+                        f'bridge entry hop30 hold pose=({pose.x:.2f},{pose.y:.2f}) z={pose.z:.3f} '
+                        f'age={hop_age:.2f}',
+                        interval=0.25,
+                    )
+                    return
+                if hop_age is not None and hop_age < 1.65:
+                    self.publish_cmd(0)
+                    self.maybe_log(
+                        f'bridge entry hop30 settle pose=({pose.x:.2f},{pose.y:.2f}) z={pose.z:.3f} '
+                        f'age={hop_age:.2f}',
                         interval=0.25,
                     )
                     return
@@ -2205,11 +2273,11 @@ class RobotStateMachine2026(Node):
                     )
                     return
 
-                if pose.y >= 11.94 and abs(yaw_error) < 0.22 and abs(lateral_error) < 0.08:
-                    forward = 58 if stalled else 48
-                    height = 248
-                    pitch = -40
-                    step = 155
+                if pose.y >= 11.88 and abs(yaw_error) < 0.24 and abs(lateral_error) < 0.08:
+                    forward = 76 if stalled else 62
+                    height = 255
+                    pitch = -48
+                    step = 170
                     yaw = int(max(-55, min(55, yaw_error * 150 + lateral_error * 18)))
                     strafe = int(max(-8, min(8, -lateral_error * 50)))
                     self.publish_cmd(20, forward, strafe, height, pitch, yaw, step)
