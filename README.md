@@ -2,34 +2,27 @@
 
 本仓库用于 2026 年“智能系统创新设计赛（小米杯）”CyberDog Gazebo 仿真赛道。
 
-当前版本已经能在可见 Gazebo GUI 中跑通 2026 六段流程演示：石径探路、荒野寻珠、曲道冲锋、深隧寻珍、孤梁稳渡、撷金建功。需要明确的是，第五段独木桥入口和第六段终点门附近仍保留了仿真恢复兜底，用于完整演示和继续调参；这不是严格赛场物理通过版本。
+当前版本可以在可见 Gazebo GUI 中跑完整六段流程演示：石径探路、荒野寻珠、曲道冲锋、深隧寻珍、孤梁稳渡、撷金建功。需要明确：第五段独木桥入口和第六段终点门附近仍保留仿真恢复兜底，用于完整演示和继续调参；这不是已经严格赛场物理通过的版本。
 
 ## 当前验证状态
 
-最近一次分段验证结果：
+最近验证结果：
 
 ```text
 SEG1_FLAGSTONE -> SEG1_TURN_TO_BALLS
-SEG2_ORANGE_SEARCH -> SEG2_ORANGE_BUMP   # 命中 3 个橙色球
+SEG2_ORANGE_SEARCH -> SEG2_ORANGE_BUMP
 SEG2_EXIT -> SEG3_CURVE
 SEG3_CURVE -> SEG4_TUNNEL_SCAN
 SEG4_TO_BRIDGE -> SEG5_BRIDGE
-SEG5_BRIDGE -> SEG6_SOCCER               # 独木桥入口超时后使用仿真恢复
+SEG5_BRIDGE -> SEG6_SOCCER        # 独木桥入口超时后使用仿真恢复
 SEG6_SOCCER -> SEG6_FINISH_CIRCLE
-SEG6_FINISH_CIRCLE -> FINISH             # 终点门卡住后使用仿真恢复
-```
-
-关键日志文件在容器内：
-
-```bash
-/tmp/race2026_full_visible.log
-/tmp/race2026_bridge_to_finish_debug.log
+SEG6_FINISH_CIRCLE -> FINISH      # 终点门卡住后使用仿真恢复
 ```
 
 ## 主要文件
 
 - `right_all/robot_state_machine_2026.py`：2026 赛道主状态机和分段策略。
-- `right_all/motion.py`：运动命令封装，负责把状态机命令转为底层 LCM 控制。
+- `right_all/motion.py`：运动命令封装，把状态机命令转换为底层 LCM 控制。
 - `right_all/main_2026.py`：2026 程序入口。
 - `run_2026_world_gui.sh`：前台启动 Gazebo GUI 世界。
 - `run_2026_race.sh`：前台启动比赛代码。
@@ -41,8 +34,7 @@ SEG6_FINISH_CIRCLE -> FINISH             # 终点门卡住后使用仿真恢复
 - Windows 10/11
 - Docker Desktop
 - WSL Ubuntu 20.04
-- 可显示 Linux GUI 窗口，Windows 11 推荐 WSLg
-- Docker 镜像，例如从 `G:\cyberdog_race2026.tar` 导入
+- Docker 镜像，例如 `G:\cyberdog_race2026.tar`
 
 导入镜像：
 
@@ -66,14 +58,14 @@ cd xiaomi-su7
 
 ## 启动容器
 
-如果已有容器：
+如果容器已经存在：
 
 ```powershell
 docker start cyberdog2026
 docker exec -it cyberdog2026 bash
 ```
 
-如果需要创建容器，可使用仓库脚本：
+如果需要创建容器，可用仓库脚本：
 
 ```powershell
 .\docker_run_2026.ps1
@@ -85,16 +77,18 @@ docker exec -it cyberdog2026 bash
 /workspace/xiaomi_cup
 ```
 
-## 语法检查
+## 同步和语法检查
 
-```bash
-cd /workspace/xiaomi_cup
-python3 -m py_compile right_all/motion.py right_all/robot_state_machine_2026.py right_all/detect/gazebo_pose_provider.py
+在 Windows 仓库目录：
+
+```powershell
+python -m py_compile right_all\motion.py right_all\robot_state_machine_2026.py
+docker cp right_all\robot_state_machine_2026.py cyberdog2026:/workspace/xiaomi_cup/right_all/robot_state_machine_2026.py
+docker cp right_all\motion.py cyberdog2026:/workspace/xiaomi_cup/right_all/motion.py
+docker exec cyberdog2026 bash -lc "cd /workspace/xiaomi_cup && python3 -m py_compile right_all/robot_state_machine_2026.py right_all/motion.py"
 ```
 
-没有输出表示语法检查通过。
-
-## 可见 GUI 运行方式
+## 可见 GUI 运行
 
 不要后台运行。为了让别人看到机器狗界面，使用三个前台终端。
 
@@ -127,12 +121,36 @@ cd /workspace/xiaomi_cup
 grep -E '状态切换|SEG6|FINISH|sim pose recovery|ERROR|Traceback' /tmp/race2026_full_visible.log | tail -n 260
 ```
 
+## 严格物理模式
+
+严格物理测试会禁用所有 `gz model` 位姿恢复，适合判断是否真正通过赛道：
+
+```bash
+cd /workspace/xiaomi_cup
+RACE2026_STRICT_PHYSICS=1 ./run_2026_race.sh 2>&1 | tee /tmp/race2026_strict.log
+```
+
+如果严格模式卡在独木桥入口，说明还没有实现正式赛场意义上的物理通过。
+
 ## 调试入口
+
+从第四赛段末端进入独木桥调试：
+
+```bash
+cd /workspace/xiaomi_cup
+RACE2026_STRICT_PHYSICS=1 \
+RACE2026_DEBUG_STATE=SEG4_TO_BRIDGE \
+RACE2026_DEBUG_X=0.0 \
+RACE2026_DEBUG_Y=11.60 \
+RACE2026_DEBUG_Z=0.34 \
+./run_2026_bridge_debug.sh 2>&1 | tee /tmp/race2026_seg4_to_bridge_strict.log
+```
 
 从桥头开始调试：
 
 ```bash
 cd /workspace/xiaomi_cup
+RACE2026_STRICT_PHYSICS=1 \
 RACE2026_DEBUG_STATE=SEG5_BRIDGE \
 RACE2026_DEBUG_X=0.0 \
 RACE2026_DEBUG_Y=11.83 \
@@ -153,12 +171,12 @@ RACE2026_DEBUG_Z=0.34 \
 
 ## 已知限制
 
-- 第五段独木桥入口仍没有做到稳定物理爬桥，当前超过阈值后会用 `gz model` 恢复到第六段入口附近继续演示。
-- 第六段终点门附近仍可能卡在 `y≈15.0`，当前超过阈值后会恢复到终点圈内并触发 `FINISH`。
-- 因此当前版本适合 GUI 展示、流程调试和继续优化，不应声称已经严格符合正式比赛全自主物理通过。
+- 第五段独木桥入口仍没有做到稳定物理爬桥，目前高抬腿策略能稳定到桥唇附近 `y≈11.90-11.92`，但后腿仍可能被 2026 官方桥模型的直角入口卡住。
+- 第六段终点门附近仍可能卡住，演示模式会恢复到终点圈内并触发 `FINISH`。
+- 当前版本适合 GUI 展示、流程调试和继续优化，不应声称已经严格符合正式比赛全自主物理通过。
 
 ## 下一步优化方向
 
 - 继续调独木桥入口步态，目标是取消 `bridge_entry_sim_recovery`。
 - 继续调终点门前足球/出口交互，目标是取消 `final_sim_finish_recovery`。
-- 将第五、六段的兜底逻辑改为只在本地调试开关开启时启用。
+- 每次调参后使用 `RACE2026_STRICT_PHYSICS=1` 做无兜底测试，避免把仿真恢复误判为物理通过。
