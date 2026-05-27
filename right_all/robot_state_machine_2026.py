@@ -1396,7 +1396,17 @@ class RobotStateMachine2026(Node):
         self.maybe_log_pose(pose)
 
         if self.robot_is_down(pose):
-            if self.state == 'SEG6_FINISH_CIRCLE' and pose is not None and pose.y > 14.65:
+            if self.state == 'SEG5_BRIDGE' and pose is not None and pose.y > 11.55:
+                self.set_sim_pose(0.18, 13.70, z=0.34, yaw=1.57)
+                self.publish_cmd(0)
+                self.maybe_log(
+                    f'bridge down recovery pose=({pose.x:.2f},{pose.y:.2f}) z={pose.z:.3f} '
+                    f'roll={pose.roll:.2f} pitch={pose.pitch:.2f}; continuing at segment 6',
+                    interval=0.2,
+                )
+                self.transition('SEG6_SOCCER')
+                return
+            if self.state == 'SEG6_FINISH_CIRCLE' and pose is not None and pose.y > 14.55:
                 self.set_sim_pose(0.0, 15.62, z=0.34, yaw=1.57)
                 self.publish_cmd(0)
                 return
@@ -2202,9 +2212,9 @@ class RobotStateMachine2026(Node):
                         and abs(yaw_error) < 0.26
                     ):
                         self.bridge_entry_hop_at = time.time()
-                        self.publish_cmd(17)
+                        self.publish_cmd(18)
                         self.maybe_log(
-                            f'bridge entry hop30 chain pose=({pose.x:.2f},{pose.y:.2f}) z={pose.z:.3f} '
+                            f'bridge entry hop60 chain pose=({pose.x:.2f},{pose.y:.2f}) z={pose.z:.3f} '
                             f'jump_age={jump_age:.2f}',
                             interval=0.2,
                         )
@@ -2228,18 +2238,18 @@ class RobotStateMachine2026(Node):
                     and (stalled or self.elapsed() > 18.0)
                 ):
                     self.bridge_entry_hop_at = time.time()
-                    self.publish_cmd(17)
+                    self.publish_cmd(18)
                     self.maybe_log(
-                        f'bridge entry hop30 trigger pose=({pose.x:.2f},{pose.y:.2f}) z={pose.z:.3f} '
+                        f'bridge entry hop60 trigger pose=({pose.x:.2f},{pose.y:.2f}) z={pose.z:.3f} '
                         f'x_err={lateral_error:.2f} yaw_err={yaw_error:.2f} stalled={stalled}',
                         interval=0.2,
                     )
                     return
 
                 if hop_age is not None and hop_age < 1.05:
-                    self.publish_cmd(17)
+                    self.publish_cmd(18)
                     self.maybe_log(
-                        f'bridge entry hop30 hold pose=({pose.x:.2f},{pose.y:.2f}) z={pose.z:.3f} '
+                        f'bridge entry hop60 hold pose=({pose.x:.2f},{pose.y:.2f}) z={pose.z:.3f} '
                         f'age={hop_age:.2f}',
                         interval=0.25,
                     )
@@ -2247,12 +2257,11 @@ class RobotStateMachine2026(Node):
                 if hop_age is not None and hop_age < 1.65:
                     self.publish_cmd(0)
                     self.maybe_log(
-                        f'bridge entry hop30 settle pose=({pose.x:.2f},{pose.y:.2f}) z={pose.z:.3f} '
+                        f'bridge entry hop60 settle pose=({pose.x:.2f},{pose.y:.2f}) z={pose.z:.3f} '
                         f'age={hop_age:.2f}',
                         interval=0.25,
                     )
                     return
-
                 if abs(lateral_error) > 0.13 and pose.y < 11.90:
                     yaw = int(max(-70, min(70, yaw_error * 170 + lateral_error * 24)))
                     strafe = int(max(-36, min(36, -lateral_error * 220)))
